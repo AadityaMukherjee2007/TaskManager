@@ -9,7 +9,8 @@ from django.utils import timezone
 from datetime import timedelta
 from django.core.mail import send_mail
 import secrets
-from .models import Team, Project, Task, TaskComment, TaskActivity, TeamInvitation, SubTask
+from .models import Team, Project, Task, TaskComment, TaskActivity, TeamInvitation, SubTask, UserProfile, Notification
+from .forms import TaskForm, TaskCommentForm, SubTaskForm, TeamInvitationForm, ProjectForm, UserProfileForm
 
 # Create your views here.
 
@@ -58,6 +59,69 @@ def dashboard(request):
     }
     
     return render(request, "Tasks/dashboard.html", context)
+
+@login_required(login_url='login')
+def profile_view(request):
+    """User profile page with notification preferences"""
+    user = request.user
+    
+    # Get or create user profile
+    profile, created = UserProfile.objects.get_or_create(user=user)
+    
+    # Get recent activity
+    recent_activities = TaskActivity.objects.filter(user=user).order_by('-created_at')[:10]
+    
+    if request.method == 'POST':
+        form = UserProfileForm(request.POST, request.FILES, instance=profile)
+        
+        if form.is_valid():
+            # Save form data
+            profile = form.save(commit=False)
+            
+            # Update user fields
+            user.first_name = form.cleaned_data.get('first_name', '')
+            user.last_name = form.cleaned_data.get('last_name', '')
+            user.email = form.cleaned_data.get('email', '')
+            user.save()
+            
+            profile.user = user
+            profile.save()
+            
+            from django.contrib import messages
+            messages.success(request, 'Profile updated successfully!')
+            return redirect('profile')
+    else:
+        # Initialize form with user data
+        initial_data = {
+            'first_name': user.first_name,
+            'last_name': user.last_name,
+            'email': user.email,
+        }
+        form = UserProfileForm(instance=profile, initial=initial_data)
+    
+    context = {
+        'form': form,
+        'profile': profile,
+        'recent_activities': recent_activities,
+    }
+    
+    return render(request, 'Tasks/profile.html', context)
+
+@login_required(login_url='login')
+def toggle_dark_mode(request):
+    """Toggle dark mode for the user"""
+    if request.method == 'POST':
+        import json
+        data = json.loads(request.body)
+        dark_mode = data.get('dark_mode', False)
+        
+        profile, created = UserProfile.objects.get_or_create(user=request.user)
+        profile.dark_mode = dark_mode
+        profile.save()
+        
+        return JsonResponse({'status': 'success', 'dark_mode': dark_mode})
+    
+    return JsonResponse({'status': 'error'}, status=400)
 
 @login_required(login_url='login')
 def settings_view(request):
@@ -156,13 +220,29 @@ def settings_view(request):
                 })
             
             # Check if user is already a team member
-            if User.objects.filter(email=invite_email, teams=team).exists():
+            if User.objects.filter(email=invite_email, teams=team).exists() or User.objects.filter(email=invite_email, managed_teams=team).exists():
                 return render(request, "Tasks/settings.html", {
                     'user': user,
                     'user_teams': user_teams,
                     'managed_teams': managed_teams,
                     'message': 'This user is already a member of this team.',
                     'message_type': 'error'
+                })
+            
+            # Check if invitation already exists and is pending
+            existing_invitation = TeamInvitation.objects.filter(
+                team=team,
+                email=invite_email,
+                status='pending'
+            ).first()
+            
+            if existing_invitation and not existing_invitation.is_expired():
+                return render(request, "Tasks/settings.html", {
+                    'user': user,
+                    'user_teams': user_teams,
+                    'managed_teams': managed_teams,
+                    'message': 'An invitation has already been sent to this email address.',
+                    'message_type': 'info'
                 })
             
             # Create or update invitation
@@ -187,12 +267,14 @@ def settings_view(request):
                 message = f"""
 Hello,
 
-{user.username} has invited you to join the team "{team.name}" on TaskManager.
+{user.get_full_name() or user.username} has invited you to join the team "{team.name}" on TaskManager.
 
-Click the link below to accept the invitation:
+To accept this invitation, click the link below or copy it into your browser:
 {invitation_link}
 
 This invitation will expire in 7 days.
+
+If you don't have a TaskManager account yet, you'll need to create one before accepting the invitation.
 
 Best regards,
 TaskManager Team
@@ -230,11 +312,88 @@ TaskManager Team
     return render(request, "Tasks/settings.html", context)
 
 
-def tasks_view(request):
-    return render(request, "Tasks/tasks.html")
-
-
 @login_required(login_url='login')
+def tasks_view(request):
+    """View all tasks for the current user across all teams/projects"""
+    user = request.user
+    
+    # Get user's teams
+    user_teams = user.teams.all() | user.managed_teams.all()
+    user_teams = user_teams.distinct()
+    
+    # Get all tasks assigned to user or created by user
+    assigned_tasks = Task.objects.filter(assignee=user).select_related('project', 'author')
+    created_tasks = Task.objects.filter(author=user).select_related('project', 'assignee')
+    
+    # Combine and deduplicate
+    all_tasks = (assigned_tasks | created_tasks).distinct().select_related('project', 'author', 'assignee')
+    
+    # Filtering
+    status_filter = request.GET.get('status')
+    priority_filter = request.GET.get('priority')
+    project_filter = request.GET.get('project')
+    task_type_filter = request.GET.get('type', 'all')  # 'assigned', 'created', 'all'
+    
+    if task_type_filter == 'assigned':
+        tasks = assigned_tasks
+    elif task_type_filter == 'created':
+        tasks = created_tasks
+    else:
+        tasks = all_tasks
+    
+    if status_filter and status_filter != 'all':
+        tasks = tasks.filter(status=status_filter)
+    
+    if priority_filter and priority_filter != 'all':
+        tasks = tasks.filter(priority=priority_filter)
+    
+    if project_filter and project_filter != 'all':
+        tasks = tasks.filter(project_id=project_filter)
+    
+    # Sorting
+    sort_by = request.GET.get('sort', '-created_at')
+    valid_sorts = ['-created_at', 'created_at', '-due_date', 'due_date', '-priority', 'priority']
+    if sort_by in valid_sorts:
+        tasks = tasks.order_by(sort_by)
+    
+    # Get user's projects for filter dropdown
+    user_projects = Project.objects.filter(
+        team__in=user_teams
+    ).distinct().order_by('name')
+    
+    # Statistics
+    total_tasks = all_tasks.count()
+    assigned_count = assigned_tasks.count()
+    created_count = created_tasks.count()
+    pending_count = all_tasks.filter(status='todo').count()
+    in_progress_count = all_tasks.filter(status='in_progress').count()
+    completed_count = all_tasks.filter(status='completed').count()
+    urgent_count = all_tasks.filter(priority='urgent', status__in=['todo', 'in_progress']).count()
+    
+    from datetime import date
+    context = {
+        'tasks': tasks,
+        'all_tasks': all_tasks,
+        'task_statuses': Task.STATUS_CHOICES,
+        'task_priorities': Task.PRIORITY_CHOICES,
+        'user_projects': user_projects,
+        'total_tasks': total_tasks,
+        'assigned_count': assigned_count,
+        'created_count': created_count,
+        'pending_count': pending_count,
+        'in_progress_count': in_progress_count,
+        'completed_count': completed_count,
+        'urgent_count': urgent_count,
+        'current_status': status_filter,
+        'current_priority': priority_filter,
+        'current_project': project_filter,
+        'current_type': task_type_filter,
+        'current_sort': sort_by,
+        'today': date.today(),
+    }
+    return render(request, "Tasks/tasks.html", context)
+
+
 def accept_invitation(request, token):
     """Accept a team invitation via email link"""
     try:
@@ -243,18 +402,35 @@ def accept_invitation(request, token):
         # Check if invitation is still valid
         if invitation.is_expired():
             return render(request, 'Tasks/invitation_error.html', {
-                'message': 'This invitation has expired. Please ask the team admin to send a new one.'
+                'message': 'This invitation has expired. Please ask the team admin to send a new one.',
+                'token': token,
+                'invitation_email': invitation.email,
             })
         
         if invitation.status != 'pending':
             return render(request, 'Tasks/invitation_error.html', {
-                'message': f'This invitation has already been {invitation.status}.'
+                'message': f'This invitation has already been {invitation.status}.',
+                'token': token,
             })
+        
+        # If user is not logged in, redirect to login
+        if not request.user.is_authenticated:
+            return redirect(f'{reverse("login")}?next={request.path}')
         
         # Check if user email matches
         if request.user.email.lower() != invitation.email.lower():
             return render(request, 'Tasks/invitation_error.html', {
-                'message': 'You are not logged in with the email address this invitation was sent to. Please log in with the correct account.'
+                'message': f'You are logged in as {request.user.email}, but this invitation was sent to {invitation.email}. Please log in with the correct account or create a new account with the invited email.',
+                'token': token,
+                'logged_in_as': request.user.email,
+                'invited_email': invitation.email,
+            })
+        
+        # Check if already a member
+        if request.user in invitation.team.members.all():
+            return render(request, 'Tasks/invitation_success.html', {
+                'team': invitation.team,
+                'message': f'You are already a member of {invitation.team.name}!'
             })
         
         # Accept the invitation
@@ -296,24 +472,79 @@ def logout_view(request):
 
 def register_view(request):
     if request.method == "POST":
-        username = request.POST["username"]
-        password = request.POST["password"]
-        confirmation = request.POST["confirmation"]
+        username = request.POST.get("username", "").strip()
+        email = request.POST.get("email", "").strip().lower()
+        password = request.POST.get("password", "")
+        confirmation = request.POST.get("confirmation") or request.POST.get("confirm_password", "")
+        
+        # Validate inputs
+        if not username:
+            return render(request, "Tasks/register.html", {
+                "message": "Username is required."
+            })
+        
+        if not email or '@' not in email:
+            return render(request, "Tasks/register.html", {
+                "message": "Valid email address is required."
+            })
+        
         if password != confirmation:
             return render(request, "Tasks/register.html", {
                 "message": "Passwords must match."
             })
-        try:
-            user = User.objects.create_user(username, password=password)
-            user.save()
-        except:
+        
+        if len(password) < 8:
             return render(request, "Tasks/register.html", {
-                "message": "Username already taken."
+                "message": "Password must be at least 8 characters long."
+            })
+        
+        try:
+            # Check if email already exists
+            if User.objects.filter(email=email).exists():
+                return render(request, "Tasks/register.html", {
+                    "message": "Email address already in use."
+                })
+            
+            user = User.objects.create_user(username, email=email, password=password)
+            user.save()
+        except Exception as e:
+            return render(request, "Tasks/register.html", {
+                "message": "Username already taken or other error occurred."
             })
         login(request, user)
         return HttpResponseRedirect(reverse("dashboard"))
     else:
         return render(request, "Tasks/register.html")
+
+
+# ============ PROJECT VIEWS ============
+
+@login_required(login_url='login')
+def create_project(request, team_id):
+    """Create a new project in a team"""
+    team = get_object_or_404(Team, id=team_id)
+    
+    # Check if user is admin of the team
+    if request.user != team.admin:
+        return redirect('dashboard')
+    
+    if request.method == 'POST':
+        form = ProjectForm(request.POST)
+        if form.is_valid():
+            project = form.save(commit=False)
+            project.team = team
+            project.owner = request.user
+            project.save()
+            
+            return redirect('project_tasks', project_id=project.id)
+    else:
+        form = ProjectForm()
+    
+    context = {
+        'team': team,
+        'form': form,
+    }
+    return render(request, 'Tasks/create_project.html', context)
 
 
 # ============ TASK VIEWS ============
@@ -328,57 +559,38 @@ def create_task(request, project_id):
         return redirect('dashboard')
     
     if request.method == 'POST':
-        title = request.POST.get('title', '').strip()
-        description = request.POST.get('description', '').strip()
-        priority = request.POST.get('priority', 'medium')
-        due_date = request.POST.get('due_date')
-        start_date = request.POST.get('start_date')
-        assignee_id = request.POST.get('assignee')
-        
-        # Validate required fields
-        if not title:
-            return render(request, 'Tasks/create_task.html', {
-                'project': project,
-                'error': 'Task title is required.',
-                'priorities': Task.PRIORITY_CHOICES,
-                'team_members': project.team.members.all()
-            })
-        
-        # Create task
-        task = Task.objects.create(
-            title=title,
-            description=description,
-            project=project,
-            author=request.user,
-            priority=priority,
-            due_date=due_date if due_date else None,
-            start_date=start_date if start_date else None,
-        )
-        
-        # Assign if assignee provided
-        if assignee_id:
-            try:
-                assignee = User.objects.get(id=assignee_id)
-                if assignee in project.team.members.all() or assignee == project.team.admin:
-                    task.assignee = assignee
-                    task.save()
-            except User.DoesNotExist:
-                pass
-        
-        # Log activity
-        TaskActivity.objects.create(
-            task=task,
-            activity_type='created',
-            user=request.user,
-            description=f'Created task "{title}"'
-        )
-        
-        return redirect('task_detail', task_id=task.id)
+        form = TaskForm(request.POST, project=project)
+        if form.is_valid():
+            task = form.save(commit=False)
+            task.project = project
+            task.author = request.user
+            task.save()
+            
+            # Log activity
+            TaskActivity.objects.create(
+                task=task,
+                activity_type='created',
+                user=request.user,
+                description=f'Created task "{task.title}"'
+            )
+            
+            # Log assignment activity if task was assigned
+            if task.assignee:
+                TaskActivity.objects.create(
+                    task=task,
+                    activity_type='assigned',
+                    user=request.user,
+                    description=f'Assigned task to {task.assignee.username}'
+                )
+            
+            return redirect('task_detail', task_id=task.id)
+    else:
+        form = TaskForm(project=project)
     
     context = {
         'project': project,
-        'priorities': Task.PRIORITY_CHOICES,
-        'team_members': project.team.members.all()
+        'form': form,
+        'team_members': project.team.members.all() | User.objects.filter(managed_teams=project.team),
     }
     return render(request, 'Tasks/create_task.html', context)
 
@@ -436,6 +648,7 @@ def task_detail(request, task_id):
                 try:
                     assignee = User.objects.get(id=assignee_id)
                     if assignee in task.project.team.members.all() or assignee == task.project.team.admin:
+                        old_assignee = task.assignee
                         task.assignee = assignee
                         task.save()
                         
@@ -451,13 +664,12 @@ def task_detail(request, task_id):
                 return redirect('task_detail', task_id=task.id)
         
         elif action == 'add_comment':
-            content = request.POST.get('comment_content', '').strip()
-            if content:
-                TaskComment.objects.create(
-                    task=task,
-                    author=request.user,
-                    content=content
-                )
+            comment_form = TaskCommentForm(request.POST)
+            if comment_form.is_valid():
+                comment = comment_form.save(commit=False)
+                comment.task = task
+                comment.author = request.user
+                comment.save()
                 
                 TaskActivity.objects.create(
                     task=task,
@@ -467,11 +679,23 @@ def task_detail(request, task_id):
                 )
                 
                 return redirect('task_detail', task_id=task.id)
+        
+        elif action == 'add_subtask':
+            subtask_form = SubTaskForm(request.POST, task=task)
+            if subtask_form.is_valid():
+                subtask = subtask_form.save(commit=False)
+                subtask.task = task
+                subtask.save()
+                
+                return redirect('task_detail', task_id=task.id)
     
     comments = task.comments.all().select_related('author').order_by('-created_at')
     subtasks = task.subtasks.all()
     activity = task.activity_log.all().select_related('user').order_by('-created_at')
-    team_members = task.project.team.members.all()
+    team_members = task.project.team.members.all() | User.objects.filter(managed_teams=task.project.team)
+    
+    comment_form = TaskCommentForm()
+    subtask_form = SubTaskForm(task=task)
     
     context = {
         'task': task,
@@ -481,6 +705,8 @@ def task_detail(request, task_id):
         'task_statuses': Task.STATUS_CHOICES,
         'task_priorities': Task.PRIORITY_CHOICES,
         'team_members': team_members,
+        'comment_form': comment_form,
+        'subtask_form': subtask_form,
     }
     return render(request, 'Tasks/task_detail.html', context)
 
@@ -495,39 +721,24 @@ def edit_task(request, task_id):
         return redirect('task_detail', task_id=task.id)
     
     if request.method == 'POST':
-        title = request.POST.get('title', '').strip()
-        description = request.POST.get('description', '').strip()
-        priority = request.POST.get('priority', 'medium')
-        due_date = request.POST.get('due_date')
-        start_date = request.POST.get('start_date')
-        
-        if not title:
-            context = {
-                'task': task,
-                'error': 'Task title is required.',
-                'priorities': Task.PRIORITY_CHOICES,
-            }
-            return render(request, 'Tasks/edit_task.html', context)
-        
-        task.title = title
-        task.description = description
-        task.priority = priority
-        task.due_date = due_date if due_date else None
-        task.start_date = start_date if start_date else None
-        task.save()
-        
-        TaskActivity.objects.create(
-            task=task,
-            activity_type='status_changed',
-            user=request.user,
-            description='Updated task details'
-        )
-        
-        return redirect('task_detail', task_id=task.id)
+        form = TaskForm(request.POST, instance=task, project=task.project)
+        if form.is_valid():
+            task = form.save()
+            
+            TaskActivity.objects.create(
+                task=task,
+                activity_type='status_changed',
+                user=request.user,
+                description='Updated task details'
+            )
+            
+            return redirect('task_detail', task_id=task.id)
+    else:
+        form = TaskForm(instance=task, project=task.project)
     
     context = {
         'task': task,
-        'priorities': Task.PRIORITY_CHOICES,
+        'form': form,
     }
     return render(request, 'Tasks/edit_task.html', context)
 
@@ -666,3 +877,115 @@ def toggle_subtask(request, subtask_id):
         return redirect('task_detail', task_id=task.id)
     
     return redirect('task_detail', task_id=task.id)
+
+@login_required(login_url='login')
+def change_password(request):
+    """Change password view"""
+    if request.method == 'POST':
+        old_password = request.POST.get('old_password', '')
+        new_password = request.POST.get('new_password', '')
+        confirm_password = request.POST.get('confirm_password', '')
+        
+        from django.contrib import messages
+        user = request.user
+        
+        # Verify old password
+        if not user.check_password(old_password):
+            messages.error(request, 'Old password is incorrect.')
+        elif new_password != confirm_password:
+            messages.error(request, 'New passwords do not match.')
+        elif len(new_password) < 8:
+            messages.error(request, 'Password must be at least 8 characters long.')
+        else:
+            user.set_password(new_password)
+            user.save()
+            messages.success(request, 'Password changed successfully!')
+            return redirect('login')
+    
+    return render(request, 'Tasks/change_password.html')
+
+
+def send_notification(user, notification_type, title, message, task=None):
+    """Send notification via email and/or Telegram"""
+    try:
+        profile = user.profile
+    except UserProfile.DoesNotExist:
+        profile = UserProfile.objects.create(user=user)
+    
+    # Create notification record
+    notification = Notification.objects.create(
+        user=user,
+        notification_type=notification_type,
+        title=title,
+        message=message,
+        related_task=task
+    )
+    
+    # Send email notification
+    if profile.enable_email_notifications:
+        send_email_notification(user, title, message)
+        notification.email_sent = True
+    
+    # Send Telegram notification
+    if profile.enable_telegram_notifications and profile.telegram_chat_id:
+        send_telegram_notification(profile.telegram_chat_id, title, message)
+        notification.telegram_sent = True
+    
+    notification.save()
+    return notification
+
+
+def send_email_notification(user, subject, message):
+    """Send email notification to user"""
+    try:
+        email_body = f"""
+Hello {user.first_name or user.username},
+
+{message}
+
+---
+TaskManager
+"""
+        send_mail(
+            subject=f'[TaskManager] {subject}',
+            message=email_body,
+            from_email='noreply@taskmanager.local',
+            recipient_list=[user.email],
+            fail_silently=True,
+        )
+    except Exception as e:
+        print(f"Error sending email: {e}")
+
+
+def send_telegram_notification(chat_id, subject, message):
+    """Send Telegram notification to user"""
+    try:
+        import requests
+        
+        # Replace with your actual Telegram bot token
+        TELEGRAM_BOT_TOKEN = 'YOUR_TELEGRAM_BOT_TOKEN'
+        
+        if not TELEGRAM_BOT_TOKEN or TELEGRAM_BOT_TOKEN == 'YOUR_TELEGRAM_BOT_TOKEN':
+            return False
+        
+        url = f'https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage'
+        
+        notification_text = f"""
+🔔 *TaskManager Notification*
+
+*{subject}*
+
+{message}
+"""
+        
+        data = {
+            'chat_id': chat_id,
+            'text': notification_text,
+            'parse_mode': 'Markdown'
+        }
+        
+        response = requests.post(url, data=data, timeout=5)
+        return response.status_code == 200
+    except Exception as e:
+        print(f"Error sending Telegram notification: {e}")
+        return False

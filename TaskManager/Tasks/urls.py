@@ -7,11 +7,15 @@ urlpatterns = [
     path("login", views.login_view, name="login"),
     path("logout", views.logout_view, name="logout"),
     path("register", views.register_view, name="register"),
+    path("profile", views.profile_view, name="profile"),
+    path("change-password", views.change_password, name="change_password"),
+    path("toggle-dark-mode", views.toggle_dark_mode, name="toggle_dark_mode"),
     path("settings", views.settings_view, name="settings"),
     path("tasks", views.tasks_view, name="tasks"),
     path("invite/<str:token>", views.accept_invitation, name="accept_invitation"),
     
     # Project and Task URLs
+    path("project/create/<int:team_id>", views.create_project, name="create_project"),
     path("project/<int:project_id>/tasks", views.project_tasks, name="project_tasks"),
     path("project/<int:project_id>/create-task", views.create_task, name="create_task"),
     path("task/<int:task_id>", views.task_detail, name="task_detail"),

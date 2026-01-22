@@ -1,0 +1,378 @@
+{% extends "Tasks/base.html" %}
+
+{% block title %}Profile - TaskManager{% endblock %}
+
+{% block body %}
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Header -->
+        <div class="mb-8">
+            <h1 class="text-4xl font-bold text-gray-900 dark:text-white">My Profile</h1>
+            <p class="text-gray-600 dark:text-gray-400 mt-2">Manage your personal information and preferences</p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Profile Card -->
+            <div class="lg:col-span-1">
+                <div class="card p-6">
+                    <div class="text-center">
+                        <!-- Avatar -->
+                        <div class="mb-6">
+                            {% if user.profile.avatar %}
+                                <img src="{{ user.profile.avatar.url }}" alt="Avatar" class="w-32 h-32 rounded-full mx-auto object-cover shadow-lg">
+                            {% else %}
+                                <div class="w-32 h-32 rounded-full mx-auto bg-gradient-to-br from-blue-400 to-indigo-600 flex items-center justify-center shadow-lg">
+                                    <i class="fas fa-user text-white text-5xl"></i>
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- User Info -->
+                        <h2 class="text-2xl font-bold text-gray-900 dark:text-white">
+                            {% if user.first_name or user.last_name %}
+                                {{ user.first_name }} {{ user.last_name }}
+                            {% else %}
+                                {{ user.username }}
+                            {% endif %}
+                        </h2>
+                        <p class="text-gray-600 dark:text-gray-400 mt-2">@{{ user.username }}</p>
+                        <p class="text-gray-500 dark:text-gray-500 text-sm mt-1">{{ user.email }}</p>
+
+                        {% if user.profile.bio %}
+                            <p class="text-gray-700 dark:text-gray-300 mt-4 text-sm">{{ user.profile.bio }}</p>
+                        {% endif %}
+
+                        <!-- Stats -->
+                        <div class="grid grid-cols-3 gap-4 mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
+                            <div>
+                                <p class="text-2xl font-bold text-blue-600">{{ user.created_tasks.count }}</p>
+                                <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">Tasks Created</p>
+                            </div>
+                            <div>
+                                <p class="text-2xl font-bold text-green-600">{{ user.assigned_tasks.count }}</p>
+                                <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">Assigned Tasks</p>
+                            </div>
+                            <div>
+                                <p class="text-2xl font-bold text-purple-600">{{ user.teams.count }}</p>
+                                <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">Teams</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Change Password Button -->
+                    <div class="mt-8">
+                        <a href="{% url 'change_password' %}" class="w-full btn-primary text-center block">
+                            <i class="fas fa-lock mr-2"></i>Change Password
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Edit Profile Form -->
+            <div class="lg:col-span-2">
+                <div class="card p-6">
+                    <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-6">
+                        <i class="fas fa-edit mr-2"></i>Edit Profile
+                    </h3>
+
+                    <form method="post" enctype="multipart/form-data" class="space-y-6">
+                        {% csrf_token %}
+
+                        <!-- Personal Information Section -->
+                        <div>
+                            <h4 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 pb-2 border-b border-gray-200 dark:border-gray-700">
+                                <i class="fas fa-user-circle mr-2"></i>Personal Information
+                            </h4>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                        First Name
+                                    </label>
+                                    {{ form.first_name }}
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                        Last Name
+                                    </label>
+                                    {{ form.last_name }}
+                                </div>
+                            </div>
+
+                            <div class="mt-4">
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                    Email Address
+                                </label>
+                                {{ form.email }}
+                            </div>
+
+                            <div class="mt-4">
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                    Phone Number
+                                </label>
+                                {{ form.phone }}
+                            </div>
+
+                            <div class="mt-4">
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                    Bio
+                                </label>
+                                {{ form.bio }}
+                            </div>
+
+                            <div class="mt-4">
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                    Profile Picture
+                                </label>
+                                <div class="flex items-center gap-4">
+                                    <div class="flex-1">
+                                        {{ form.avatar }}
+                                    </div>
+                                    {% if user.profile.avatar %}
+                                        <img src="{{ user.profile.avatar.url }}" alt="Current Avatar" class="w-16 h-16 rounded-lg object-cover">
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Display Preferences Section -->
+                        <div>
+                            <h4 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 pb-2 border-b border-gray-200 dark:border-gray-700">
+                                <i class="fas fa-palette mr-2"></i>Display Preferences
+                            </h4>
+
+                            <div class="space-y-4">
+                                <div class="flex items-center p-4 rounded-lg bg-gray-50 dark:bg-gray-700">
+                                    <div class="flex-1">
+                                        <label for="dark_mode" class="text-sm font-medium text-gray-700 dark:text-gray-300 cursor-pointer">
+                                            <i class="fas fa-moon mr-2"></i>Dark Mode
+                                        </label>
+                                        <p class="text-xs text-gray-600 dark:text-gray-400">Enable dark theme for the application</p>
+                                    </div>
+                                    <div class="ml-4">
+                                        {{ form.dark_mode }}
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                        <i class="fas fa-brush mr-2"></i>Theme Color
+                                    </label>
+                                    {{ form.theme_color }}
+                                    <div class="flex gap-2 mt-2">
+                                        <div class="w-6 h-6 rounded-full bg-blue-500"></div>
+                                        <div class="w-6 h-6 rounded-full bg-purple-500"></div>
+                                        <div class="w-6 h-6 rounded-full bg-green-500"></div>
+                                        <div class="w-6 h-6 rounded-full bg-red-500"></div>
+                                        <div class="w-6 h-6 rounded-full bg-indigo-500"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Email Notifications Section -->
+                        <div>
+                            <h4 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 pb-2 border-b border-gray-200 dark:border-gray-700">
+                                <i class="fas fa-envelope mr-2"></i>Email Notifications
+                            </h4>
+
+                            <div class="space-y-3">
+                                <div class="flex items-center p-4 rounded-lg bg-gray-50 dark:bg-gray-700">
+                                    <div class="flex-1">
+                                        <label for="enable_email_notifications" class="text-sm font-medium text-gray-700 dark:text-gray-300 cursor-pointer">
+                                            Enable Email Notifications
+                                        </label>
+                                        <p class="text-xs text-gray-600 dark:text-gray-400">Receive updates via email</p>
+                                    </div>
+                                    <div class="ml-4">
+                                        {{ form.enable_email_notifications }}
+                                    </div>
+                                </div>
+
+                                <div class="ml-4 space-y-2 p-4 rounded-lg bg-blue-50 dark:bg-gray-800 border border-blue-200 dark:border-gray-700">
+                                    <label class="flex items-center gap-2 cursor-pointer">
+                                        {{ form.notify_on_task_assignment }}
+                                        <span class="text-sm text-gray-700 dark:text-gray-300">When a task is assigned to me</span>
+                                    </label>
+                                    <label class="flex items-center gap-2 cursor-pointer">
+                                        {{ form.notify_on_task_completion }}
+                                        <span class="text-sm text-gray-700 dark:text-gray-300">When an assigned task is completed</span>
+                                    </label>
+                                    <label class="flex items-center gap-2 cursor-pointer">
+                                        {{ form.notify_on_comment }}
+                                        <span class="text-sm text-gray-700 dark:text-gray-300">When someone comments on my tasks</span>
+                                    </label>
+                                    <label class="flex items-center gap-2 cursor-pointer">
+                                        {{ form.notify_on_team_invitation }}
+                                        <span class="text-sm text-gray-700 dark:text-gray-300">When invited to join a team</span>
+                                    </label>
+                                    <label class="flex items-center gap-2 cursor-pointer">
+                                        {{ form.notify_on_subtask_assignment }}
+                                        <span class="text-sm text-gray-700 dark:text-gray-300">When assigned to a subtask</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Telegram Notifications Section -->
+                        <div>
+                            <h4 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 pb-2 border-b border-gray-200 dark:border-gray-700">
+                                <i class="fab fa-telegram mr-2"></i>Telegram Notifications
+                            </h4>
+
+                            <div class="space-y-3">
+                                <div class="flex items-center p-4 rounded-lg bg-gray-50 dark:bg-gray-700">
+                                    <div class="flex-1">
+                                        <label for="enable_telegram_notifications" class="text-sm font-medium text-gray-700 dark:text-gray-300 cursor-pointer">
+                                            Enable Telegram Notifications
+                                        </label>
+                                        <p class="text-xs text-gray-600 dark:text-gray-400">Receive instant updates on Telegram</p>
+                                    </div>
+                                    <div class="ml-4">
+                                        {{ form.enable_telegram_notifications }}
+                                    </div>
+                                </div>
+
+                                <div class="p-4 rounded-lg bg-blue-50 dark:bg-gray-800 border border-blue-200 dark:border-gray-700">
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                        Telegram Chat ID
+                                    </label>
+                                    {{ form.telegram_chat_id }}
+                                    <p class="text-xs text-gray-600 dark:text-gray-400 mt-2">
+                                        <i class="fas fa-info-circle mr-1"></i>
+                                        Don't have a Telegram Chat ID? 
+                                        <a href="https://t.me/userinfobot" target="_blank" class="text-blue-600 dark:text-blue-400 hover:underline">Get it here</a>
+                                    </p>
+                                </div>
+
+                                {% if user.profile.enable_telegram_notifications %}
+                                    <div class="p-4 rounded-lg bg-green-50 dark:bg-gray-800 border border-green-200 dark:border-gray-700">
+                                        <i class="fas fa-check-circle text-green-600 mr-2"></i>
+                                        <span class="text-sm text-green-800 dark:text-green-400">Telegram notifications are enabled</span>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div class="flex gap-4 pt-6 border-t border-gray-200 dark:border-gray-700">
+                            <button type="submit" class="flex-1 btn-primary text-center">
+                                <i class="fas fa-save mr-2"></i>Save Changes
+                            </button>
+                            <a href="{% url 'dashboard' %}" class="flex-1 btn-secondary text-center">
+                                <i class="fas fa-times mr-2"></i>Cancel
+                            </a>
+                        </div>
+                    </form>
+
+                    <!-- Form Errors -->
+                    {% if form.non_field_errors %}
+                        <div class="mt-4 p-4 rounded-lg bg-red-50 dark:bg-red-900 border border-red-200 dark:border-red-700">
+                            {% for error in form.non_field_errors %}
+                                <p class="text-sm text-red-700 dark:text-red-200">
+                                    <i class="fas fa-exclamation-circle mr-2"></i>{{ error }}
+                                </p>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+
+                    {% if form.errors %}
+                        <div class="mt-4 space-y-2">
+                            {% for field, errors in form.errors.items %}
+                                <div class="p-3 rounded-lg bg-red-50 dark:bg-red-900 border border-red-200 dark:border-red-700">
+                                    <p class="text-sm font-medium text-red-700 dark:text-red-200">{{ field }}:</p>
+                                    {% for error in errors %}
+                                        <p class="text-sm text-red-600 dark:text-red-300">
+                                            <i class="fas fa-circle text-xs mr-1"></i>{{ error }}
+                                        </p>
+                                    {% endfor %}
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+
+                    <!-- Success Message -->
+                    {% if messages %}
+                        <div class="mt-4 space-y-2">
+                            {% for message in messages %}
+                                <div class="p-4 rounded-lg {% if message.tags %}bg-{{ message.tags }}-50 dark:bg-{{ message.tags }}-900 border border-{{ message.tags }}-200 dark:border-{{ message.tags }}-700{% else %}bg-blue-50 dark:bg-blue-900 border border-blue-200 dark:border-blue-700{% endif %}">
+                                    <p class="text-sm {% if message.tags %}text-{{ message.tags }}-700 dark:text-{{ message.tags }}-200{% else %}text-blue-700 dark:text-blue-200{% endif %}">
+                                        <i class="fas fa-check-circle mr-2"></i>{{ message }}
+                                    </p>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Activity Section -->
+        <div class="mt-12 grid grid-cols-1 md:grid-cols-2 gap-8">
+            <!-- Recent Activity -->
+            <div class="card p-6">
+                <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-4">
+                    <i class="fas fa-history mr-2"></i>Recent Activity
+                </h3>
+                <div class="space-y-4">
+                    {% for activity in recent_activities %}
+                        <div class="flex gap-3 pb-4 border-b border-gray-200 dark:border-gray-700 last:border-b-0">
+                            <div class="flex-shrink-0">
+                                <i class="fas fa-circle text-blue-500 text-xs mt-1.5"></i>
+                            </div>
+                            <div class="flex-1">
+                                <p class="text-sm font-medium text-gray-900 dark:text-white">{{ activity.description }}</p>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ activity.created_at|timesince }} ago</p>
+                            </div>
+                        </div>
+                    {% empty %}
+                        <p class="text-gray-600 dark:text-gray-400 text-sm">No recent activity</p>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Account Settings -->
+            <div class="card p-6">
+                <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-4">
+                    <i class="fas fa-lock mr-2"></i>Account Security
+                </h3>
+                <div class="space-y-4">
+                    <div class="p-4 rounded-lg bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-gray-900 dark:text-white">Password</p>
+                                <p class="text-xs text-gray-500 dark:text-gray-400">Last changed 2 months ago</p>
+                            </div>
+                            <a href="{% url 'change_password' %}" class="btn-primary text-sm">
+                                <i class="fas fa-key mr-1"></i>Change
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="p-4 rounded-lg bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-gray-900 dark:text-white">Two-Factor Authentication</p>
+                                <p class="text-xs text-gray-500 dark:text-gray-400">Enhance your account security</p>
+                            </div>
+                            <span class="px-3 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
+                                Coming Soon
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="p-4 rounded-lg bg-red-50 dark:bg-red-900 border border-red-200 dark:border-red-700">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-red-900 dark:text-red-200">Delete Account</p>
+                                <p class="text-xs text-red-700 dark:text-red-300">Permanently delete your account and data</p>
+                            </div>
+                            <button class="px-3 py-1 bg-red-600 hover:bg-red-700 text-white text-sm rounded-lg transition">
+                                <i class="fas fa-trash mr-1"></i>Delete
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

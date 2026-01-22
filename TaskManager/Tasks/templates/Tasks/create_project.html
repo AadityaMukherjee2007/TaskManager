@@ -1,0 +1,92 @@
+{% extends "Tasks/base.html" %}
+
+{% block title %}Create Project - {{ team.name }}{% endblock %}
+
+{% block body %}
+    <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Header -->
+        <div class="mb-8">
+            <a href="{% url 'dashboard' %}" class="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 mb-2 inline-block">
+                <i class="fas fa-arrow-left mr-1"></i>Back to Dashboard
+            </a>
+            <h1 class="text-4xl font-bold text-gray-900 dark:text-white">Create New Project</h1>
+            <p class="text-gray-600 dark:text-gray-400 mt-2">In team: <span class="font-semibold">{{ team.name }}</span></p>
+        </div>
+
+        <!-- Error Message -->
+        {% if error %}
+            <div class="mb-6 p-4 bg-red-50 dark:bg-red-900 border border-red-200 dark:border-red-700 rounded-lg">
+                <p class="text-red-700 dark:text-red-200">{{ error }}</p>
+            </div>
+        {% endif %}
+
+        <!-- Form Errors -->
+        {% if form.non_field_errors %}
+            <div class="mb-6 p-4 bg-red-50 dark:bg-red-900 border border-red-200 dark:border-red-700 rounded-lg">
+                {% for error in form.non_field_errors %}
+                    <p class="text-red-700 dark:text-red-200">{{ error }}</p>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <!-- Form Card -->
+        <div class="card p-8">
+            <form method="post" class="space-y-6">
+                {% csrf_token %}
+
+                <!-- Project Name -->
+                <div>
+                    <label for="{{ form.name.id_for_label }}" class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                        Project Name <span class="text-red-500">*</span>
+                    </label>
+                    <input 
+                        type="text" 
+                        name="name" 
+                        id="{{ form.name.id_for_label }}"
+                        class="form-input"
+                        placeholder="Enter project name"
+                        value="{{ form.name.value|default:'' }}"
+                        required
+                    >
+                    {% if form.name.errors %}
+                        <p class="text-red-600 dark:text-red-400 text-sm mt-1">{{ form.name.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Description -->
+                <div>
+                    <label for="{{ form.description.id_for_label }}" class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                        Description
+                    </label>
+                    <textarea 
+                        name="description" 
+                        id="{{ form.description.id_for_label }}"
+                        class="form-input h-32 resize-none"
+                        placeholder="Describe your project..."
+                    >{{ form.description.value|default:'' }}</textarea>
+                    {% if form.description.errors %}
+                        <p class="text-red-600 dark:text-red-400 text-sm mt-1">{{ form.description.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Help Text -->
+                <div class="p-4 bg-blue-50 dark:bg-blue-900 border border-blue-200 dark:border-blue-700 rounded-lg">
+                    <p class="text-blue-800 dark:text-blue-200 text-sm">
+                        <i class="fas fa-info-circle mr-2"></i>
+                        Projects help organize tasks within a team. All team members will be able to see and contribute to this project.
+                    </p>
+                </div>
+
+                <!-- Form Actions -->
+                <div class="flex gap-4 justify-end pt-4 border-t border-gray-200 dark:border-gray-700">
+                    <a href="{% url 'dashboard' %}" class="btn-secondary">
+                        <i class="fas fa-times mr-2"></i>Cancel
+                    </a>
+                    <button type="submit" class="btn-primary">
+                        <i class="fas fa-plus mr-2"></i>Create Project
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+{% endblock %}

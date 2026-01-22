@@ -2,4 +2,6 @@ from django.apps import AppConfig
 
 
 class TasksConfig(AppConfig):
-    name = "Tasks"
+    name = "Tasks"    
+    def ready(self):
+        import Tasks.signals
