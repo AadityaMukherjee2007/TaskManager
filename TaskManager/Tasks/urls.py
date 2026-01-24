@@ -1,8 +1,10 @@
 from django.urls import path
 
+
 from . import views
 
 urlpatterns = [
+    path("team/create", views.create_team, name="create_team"),
     path("", views.dashboard, name="dashboard"),
     path("login", views.login_view, name="login"),
     path("logout", views.logout_view, name="logout"),

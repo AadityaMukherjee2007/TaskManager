@@ -1,3 +1,8 @@
+from .forms import TaskForm, TaskCommentForm, SubTaskForm, TeamInvitationForm, ProjectForm, UserProfileForm
+# --- Create Team View ---
+from django.contrib import messages
+
+
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
@@ -15,6 +20,20 @@ from .forms import TaskForm, TaskCommentForm, SubTaskForm, TeamInvitationForm, P
 # Create your views here.
 
 @login_required(login_url='login')
+def create_team(request):
+    if request.method == 'POST':
+        name = request.POST.get('name', '').strip()
+        description = request.POST.get('description', '').strip()
+        if not name:
+            messages.error(request, 'Team name is required.')
+        else:
+            team = Team.objects.create(name=name, description=description, admin=request.user)
+            team.members.add(request.user)
+            messages.success(request, f'Team "{name}" created successfully!')
+            return redirect('dashboard')
+    return render(request, 'Tasks/create_team.html')
+
+@login_required(login_url='login')
 def dashboard(request):
     """Main dashboard with task overview and team info"""
     user = request.user
@@ -29,7 +48,30 @@ def dashboard(request):
     created_tasks = Task.objects.filter(author=user).select_related('project', 'assignee')
     
     # Task statistics
-    my_tasks = assigned_tasks
+    search_query = request.GET.get('search', '').strip()
+    if search_query:
+        my_tasks = assigned_tasks.filter(
+            Q(title__icontains=search_query) |
+            Q(description__icontains=search_query)
+        )
+        # Also search projects
+        matching_projects = Project.objects.filter(
+            Q(name__icontains=search_query) |
+            Q(description__icontains=search_query),
+            team__in=all_teams
+        )
+        # Show recent tasks matching search or from matching projects
+        recent_tasks = Task.objects.filter(
+            Q(assignee=user) | Q(author=user),
+            Q(title__icontains=search_query) |
+            Q(description__icontains=search_query) |
+            Q(project__in=matching_projects)
+        ).order_by('-created_at')[:10]
+    else:
+        my_tasks = assigned_tasks
+        recent_tasks = Task.objects.filter(
+            Q(assignee=user) | Q(author=user)
+        ).order_by('-created_at')[:10]
     in_progress = assigned_tasks.filter(status='in_progress').count()
     completed = assigned_tasks.filter(status='completed').count()
     pending = assigned_tasks.filter(status='todo').count()
@@ -47,6 +89,8 @@ def dashboard(request):
         due_date__isnull=False
     ).order_by('due_date')[:5]
     
+
+
     context = {
         'teams': all_teams,
         'my_tasks': my_tasks,
@@ -56,8 +100,10 @@ def dashboard(request):
         'urgent_tasks': urgent_tasks,
         'recent_activities': recent_activities,
         'upcoming_deadlines': upcoming_deadlines,
+        'search_query': search_query,
+        'recent_tasks': recent_tasks,
+        'user_projects': Project.objects.filter(team__in=all_teams),
     }
-    
     return render(request, "Tasks/dashboard.html", context)
 
 @login_required(login_url='login')
@@ -73,20 +119,21 @@ def profile_view(request):
     
     if request.method == 'POST':
         form = UserProfileForm(request.POST, request.FILES, instance=profile)
-        
         if form.is_valid():
             # Save form data
             profile = form.save(commit=False)
-            
             # Update user fields
             user.first_name = form.cleaned_data.get('first_name', '')
             user.last_name = form.cleaned_data.get('last_name', '')
             user.email = form.cleaned_data.get('email', '')
             user.save()
-            
+            # Handle avatar removal
+            if form.cleaned_data.get('remove_avatar'):
+                if profile.avatar:
+                    profile.avatar.delete(save=False)
+                profile.avatar = None
             profile.user = user
             profile.save()
-            
             from django.contrib import messages
             messages.success(request, 'Profile updated successfully!')
             return redirect('profile')
@@ -229,21 +276,13 @@ def settings_view(request):
                     'message_type': 'error'
                 })
             
-            # Check if invitation already exists and is pending
-            existing_invitation = TeamInvitation.objects.filter(
+            # Remove restriction: allow sending multiple invites
+            # Optionally, expire previous pending invitations
+            TeamInvitation.objects.filter(
                 team=team,
                 email=invite_email,
                 status='pending'
-            ).first()
-            
-            if existing_invitation and not existing_invitation.is_expired():
-                return render(request, "Tasks/settings.html", {
-                    'user': user,
-                    'user_teams': user_teams,
-                    'managed_teams': managed_teams,
-                    'message': 'An invitation has already been sent to this email address.',
-                    'message_type': 'info'
-                })
+            ).update(status='expired')
             
             # Create or update invitation
             token = secrets.token_urlsafe(32)
@@ -263,27 +302,32 @@ def settings_view(request):
             # Send invitation email
             try:
                 invitation_link = request.build_absolute_uri(reverse('accept_invitation', args=[token]))
-                subject = f"You're invited to join {team.name} on TaskManager"
+                subject = f"You're invited to join {team.name} on TaskManager!"
                 message = f"""
-Hello,
+Hi,
 
 {user.get_full_name() or user.username} has invited you to join the team "{team.name}" on TaskManager.
 
-To accept this invitation, click the link below or copy it into your browser:
+To accept your invitation, please click the link below:
 {invitation_link}
 
-This invitation will expire in 7 days.
+This invitation is valid for 7 days.
 
-If you don't have a TaskManager account yet, you'll need to create one before accepting the invitation.
+If you don't have a TaskManager account yet, you can create one before accepting the invite.
+
+We're excited to have you join the team and collaborate on projects and tasks!
+
+If you have any questions, feel free to reply to this email.
 
 Best regards,
-TaskManager Team
+The TaskManager Team
                 """
                 
+                from django.conf import settings
                 send_mail(
                     subject,
                     message,
-                    'noreply@taskmanager.com',
+                    settings.DEFAULT_FROM_EMAIL,
                     [invite_email],
                     fail_silently=False,
                 )
@@ -372,10 +416,12 @@ def tasks_view(request):
     
     from datetime import date
     context = {
-        'tasks': tasks,
+        'user': user,
+        'user_teams': user_teams,
+        'assigned_tasks': assigned_tasks,
+        'created_tasks': created_tasks,
         'all_tasks': all_tasks,
-        'task_statuses': Task.STATUS_CHOICES,
-        'task_priorities': Task.PRIORITY_CHOICES,
+        'tasks': tasks,
         'user_projects': user_projects,
         'total_tasks': total_tasks,
         'assigned_count': assigned_count,
@@ -384,67 +430,43 @@ def tasks_view(request):
         'in_progress_count': in_progress_count,
         'completed_count': completed_count,
         'urgent_count': urgent_count,
-        'current_status': status_filter,
-        'current_priority': priority_filter,
-        'current_project': project_filter,
-        'current_type': task_type_filter,
-        'current_sort': sort_by,
-        'today': date.today(),
+        'status_filter': status_filter,
+        'priority_filter': priority_filter,
+        'project_filter': project_filter,
+        'task_type_filter': task_type_filter,
+        'sort_by': sort_by,
     }
     return render(request, "Tasks/tasks.html", context)
-
-
 def accept_invitation(request, token):
     """Accept a team invitation via email link"""
     try:
         invitation = TeamInvitation.objects.get(token=token)
-        
+
         # Check if invitation is still valid
         if invitation.is_expired():
             return render(request, 'Tasks/invitation_error.html', {
-                'message': 'This invitation has expired. Please ask the team admin to send a new one.',
-                'token': token,
-                'invitation_email': invitation.email,
+                'message': 'This invitation has expired. Please ask the team admin to send a new one.'
             })
-        
-        if invitation.status != 'pending':
-            return render(request, 'Tasks/invitation_error.html', {
-                'message': f'This invitation has already been {invitation.status}.',
-                'token': token,
-            })
-        
-        # If user is not logged in, redirect to login
-        if not request.user.is_authenticated:
-            return redirect(f'{reverse("login")}?next={request.path}')
-        
-        # Check if user email matches
-        if request.user.email.lower() != invitation.email.lower():
-            return render(request, 'Tasks/invitation_error.html', {
-                'message': f'You are logged in as {request.user.email}, but this invitation was sent to {invitation.email}. Please log in with the correct account or create a new account with the invited email.',
-                'token': token,
-                'logged_in_as': request.user.email,
-                'invited_email': invitation.email,
-            })
-        
+
         # Check if already a member
         if request.user in invitation.team.members.all():
             return render(request, 'Tasks/invitation_success.html', {
                 'team': invitation.team,
                 'message': f'You are already a member of {invitation.team.name}!'
             })
-        
+
         # Accept the invitation
         invitation.team.members.add(request.user)
         invitation.status = 'accepted'
         invitation.accepted_at = timezone.now()
         invitation.accepted_by = request.user
         invitation.save()
-        
+
         return render(request, 'Tasks/invitation_success.html', {
             'team': invitation.team,
             'message': f'You have successfully joined {invitation.team.name}!'
         })
-    
+
     except TeamInvitation.DoesNotExist:
         return render(request, 'Tasks/invitation_error.html', {
             'message': 'This invitation link is invalid or has expired.'
@@ -574,7 +596,7 @@ def create_task(request, project_id):
                 description=f'Created task "{task.title}"'
             )
             
-            # Log assignment activity if task was assigned
+            # Log assignment activity and send notifications if task was assigned
             if task.assignee:
                 TaskActivity.objects.create(
                     task=task,
@@ -582,7 +604,14 @@ def create_task(request, project_id):
                     user=request.user,
                     description=f'Assigned task to {task.assignee.username}'
                 )
-            
+                # Send notification to assignee
+                send_notification(
+                    user=task.assignee,
+                    notification_type='task_assigned',
+                    title=f'New Task Assigned: {task.title}',
+                    message=f'You have been assigned a new task "{task.title}" in project "{project.name}".',
+                    task=task
+                )
             return redirect('task_detail', task_id=task.id)
     else:
         form = TaskForm(project=project)

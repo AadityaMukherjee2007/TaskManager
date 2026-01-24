@@ -1,0 +1,25 @@
+<div class="bg-white rounded-xl shadow p-4 mb-4">
+    <h3 class="text-lg font-bold text-gray-900 mb-2">Recent Activities</h3>
+    <div class="divide-y">
+        {% if recent_activities %}
+            {% for activity in recent_activities %}
+                <div class="py-4 flex items-center gap-3 hover:bg-gray-50 transition">
+                    <div class="w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 to-indigo-500 flex items-center justify-center text-white font-bold text-xs" title="{{ activity.user.username }}">
+                        {{ activity.user.username|first|upper }}
+                    </div>
+                    <div>
+                        <span class="font-semibold text-gray-900">{{ activity.user.username }}</span>
+                        <span class="text-gray-600 text-sm ml-2">{{ activity.description }}</span>
+                        <span class="text-gray-400 text-xs ml-2">{{ activity.created_at|timesince }} ago</span>
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="py-8 flex flex-col items-center justify-center text-gray-400">
+                <img src="https://cdn.jsdelivr.net/gh/edent/SuperTinyIcons/images/svg/activity.svg" alt="No activity" class="w-12 h-12 mb-2 opacity-60" loading="lazy">
+                <div class="text-base font-medium">No recent activity.</div>
+                <div class="text-xs mt-1">Your recent actions will appear here.</div>
+            </div>
+        {% endif %}
+    </div>
+</div>

@@ -1,3 +1,4 @@
+
 """
 Django settings for TaskManager project.
 
@@ -11,6 +12,10 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
 from pathlib import Path
+import os
+from dotenv import load_dotenv
+
+load_dotenv(os.path.join(Path(__file__).resolve().parent.parent, '.env'))
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -119,19 +124,16 @@ STATIC_URL = "static/"
 # Email Configuration
 # For development, use console backend (prints emails to console)
 # For production, use SMTP or other email service
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'  # Console backend for development
-# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'  # Uncomment for production
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'  # Use SMTP backend for real email sending
+# EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'  # Use console backend for development
 
 # SMTP Configuration (uncomment for production)
-# EMAIL_HOST = 'smtp.gmail.com'  # or your email service provider
-# EMAIL_PORT = 587
-# EMAIL_USE_TLS = True
-# EMAIL_HOST_USER = 'your-email@example.com'
-# EMAIL_HOST_PASSWORD = 'your-password'
-# DEFAULT_FROM_EMAIL = 'noreply@taskmanager.com'
-
-# Console backend settings (for development)
-DEFAULT_FROM_EMAIL = 'noreply@taskmanager.com'
+EMAIL_HOST = 'smtp.gmail.com'  # or your email service provider
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = os.getenv('USER_EMAIL', 'automyxautomations@gmail.com')
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
+DEFAULT_FROM_EMAIL = os.getenv('USER_EMAIL', 'automyxautomations@gmail.com')
 
 # File upload settings
 MEDIA_URL = '/media/'
