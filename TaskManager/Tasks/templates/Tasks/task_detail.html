@@ -91,12 +91,10 @@
                         {% csrf_token %}
                         <input type="hidden" name="action" value="add_comment">
                         <div class="space-y-3">
-                            <textarea 
-                                name="comment_content" 
-                                placeholder="Add a comment..."
-                                rows="3"
-                                class="w-full px-4 py-2 rounded border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none"
-                            ></textarea>
+                            {{ comment_form.content }}
+                            {% if comment_form.content.errors %}
+                                <p class="text-red-600 text-sm mt-1">{{ comment_form.content.errors.0 }}</p>
+                            {% endif %}
                             <button type="submit" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded transition">
                                 <i class="fas fa-comment mr-1"></i>Post Comment
                             </button>

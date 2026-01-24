@@ -348,10 +348,14 @@ The TaskManager Team
                     'message_type': 'error'
                 })
     
+    all_teams = (user_teams | managed_teams).distinct()
+    user_projects = Project.objects.filter(team__in=all_teams)
     context = {
         'user': user,
         'user_teams': user_teams,
         'managed_teams': managed_teams,
+        'teams': all_teams,
+        'user_projects': user_projects,
     }
     return render(request, "Tasks/settings.html", context)
 
@@ -423,6 +427,7 @@ def tasks_view(request):
         'all_tasks': all_tasks,
         'tasks': tasks,
         'user_projects': user_projects,
+        'teams': user_teams,
         'total_tasks': total_tasks,
         'assigned_count': assigned_count,
         'created_count': created_count,
@@ -933,6 +938,18 @@ def change_password(request):
     
     return render(request, 'Tasks/change_password.html')
 
+
+
+from .telegram_utils import send_telegram_message
+
+def send_telegram_notification(chat_id, title, message):
+    """Send a Telegram message to the given chat_id with a formatted message."""
+    full_message = f"\u2B06\uFE0F *TaskManager Notification* \u2B06\uFE0F\n\n*{title}*\n{message}"
+    try:
+        send_telegram_message(chat_id, full_message)
+    except Exception as e:
+        # Optionally log the error
+        pass
 
 def send_notification(user, notification_type, title, message, task=None):
     """Send notification via email and/or Telegram"""

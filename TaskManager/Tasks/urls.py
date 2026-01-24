@@ -2,6 +2,7 @@ from django.urls import path
 
 
 from . import views
+from .team_tasks_view import team_tasks
 
 urlpatterns = [
     path("team/create", views.create_team, name="create_team"),
@@ -26,4 +27,5 @@ urlpatterns = [
     path("task/<int:task_id>/status", views.update_task_status, name="update_task_status"),
     path("task/<int:task_id>/add-subtask", views.add_subtask, name="add_subtask"),
     path("subtask/<int:subtask_id>/toggle", views.toggle_subtask, name="toggle_subtask"),
+    path("team/<int:team_id>/tasks", team_tasks, name="team_tasks"),
 ]

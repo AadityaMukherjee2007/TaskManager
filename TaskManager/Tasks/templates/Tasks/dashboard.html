@@ -11,62 +11,77 @@
                 <p class="text-gray-600 mt-2 text-lg">Here's an overview of your tasks and team activities.</p>
             </div>
             <div class="flex gap-2 flex-wrap justify-end">
-                <!-- Action Bar Section -->
+                <!-- Modern Quick Actions Section -->
                 <div class="mb-8">
-                    <div class="bg-white rounded-2xl shadow-lg p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-6 border-t-4 border-indigo-500">
-                        <div class="flex flex-col gap-2">
-                            <h2 class="text-2xl font-bold text-gray-900 mb-1">Quick Actions</h2>
-                            <p class="text-gray-500 text-sm">Manage your projects and teams instantly.</p>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <!-- Create Team Card -->
+                        <div class="bg-gradient-to-br from-indigo-500 to-blue-500 rounded-2xl shadow-lg p-6 flex flex-col items-center justify-center text-white hover:scale-105 transition-transform cursor-pointer">
+                            <i class="fas fa-users text-3xl mb-3"></i>
+                            <h3 class="text-lg font-bold mb-1">Create Team</h3>
+                            <p class="text-sm mb-4 text-indigo-100">Start collaborating by creating a new team.</p>
+                            <a href="{% url 'create_team' %}" class="bg-white text-indigo-600 font-semibold px-4 py-2 rounded-lg shadow hover:bg-indigo-50 transition">New Team</a>
                         </div>
-                        <div class="flex gap-3 flex-wrap justify-end items-center">
-                    {% if teams and teams|length > 0 %}
-                        {% for team in teams %}
-                            {% if team.admin == request.user %}
-                                <a href="{% url 'create_project' team.id %}" class="btn-primary flex items-center gap-2 shadow-md">
-                                    <i class="fas fa-folder-plus"></i> Add Project ({{ team.name }})
-                                </a>
-                                <a href="{% url 'settings' %}#teams" class="btn-primary flex items-center gap-2 shadow-md">
-                                    <i class="fas fa-user-plus"></i> Invite to Team ({{ team.name }})
-                                </a>
+                        <!-- Add Project Card -->
+                        <div class="bg-gradient-to-br from-green-400 to-blue-400 rounded-2xl shadow-lg p-6 flex flex-col items-center justify-center text-white hover:scale-105 transition-transform cursor-pointer">
+                            <i class="fas fa-folder-plus text-3xl mb-3"></i>
+                            <h3 class="text-lg font-bold mb-1">Add Project</h3>
+                            <p class="text-sm mb-4 text-green-100">Organize your work by adding a project to a team.</p>
+                            {% if teams and teams|length > 0 %}
+                                <div class="relative w-full">
+                                    <select id="quickAddProjectTeam" class="w-full px-3 py-2 rounded-lg text-gray-700 focus:outline-none focus:ring-2 focus:ring-green-400 text-sm mb-2">
+                                        <option value="">Select Team</option>
+                                        {% for team in teams %}
+                                            <option value="{{ team.id }}">{{ team.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <a id="quickAddProjectBtn" href="#" class="bg-white text-green-600 font-semibold px-4 py-2 rounded-lg shadow hover:bg-green-50 transition block text-center">Add Project</a>
+                                </div>
+                                <script>
+                                    document.addEventListener('DOMContentLoaded', function() {
+                                        const btn = document.getElementById('quickAddProjectBtn');
+                                        const select = document.getElementById('quickAddProjectTeam');
+                                        btn.addEventListener('click', function(e) {
+                                            e.preventDefault();
+                                            if (select.value) {
+                                                window.location.href = `/project/create/${select.value}`;
+                                            }
+                                        });
+                                    });
+                                </script>
+                            {% else %}
+                                <a href="{% url 'create_team' %}" class="bg-white text-green-600 font-semibold px-4 py-2 rounded-lg shadow hover:bg-green-50 transition block text-center">Create a Team First</a>
                             {% endif %}
-                        {% endfor %}
-                    {% else %}
-                        <a href="{% url 'create_team' %}" class="btn-primary flex items-center gap-2 shadow-md">
-                            <i class="fas fa-users"></i> Create Team
-                        </a>
-                    {% endif %}
-                {% if user_projects and user_projects|length > 0 %}
-                    <div class="relative">
-                        <button id="dashboardAddTaskBtn" class="btn-primary flex items-center gap-2 shadow-md">
-                            <i class="fas fa-plus"></i> Add Task
-                        </button>
-                        <div id="dashboardAddTaskDropdown" class="hidden absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg z-50 border border-gray-200">
-                            <div class="py-2">
-                                {% for project in user_projects %}
-                                    <a href="{% url 'create_task' project.id %}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">{{ project.name }}</a>
-                                {% endfor %}
-                            </div>
                         </div>
-                    </div>
-                    <script>
-                        const dashBtn = document.getElementById('dashboardAddTaskBtn');
-                        const dashDropdown = document.getElementById('dashboardAddTaskDropdown');
-                        dashBtn.addEventListener('click', function(e) {
-                            e.preventDefault();
-                            dashDropdown.classList.toggle('hidden');
-                        });
-                        document.addEventListener('click', function(e) {
-                            if (!dashBtn.contains(e.target) && !dashDropdown.contains(e.target)) {
-                                dashDropdown.classList.add('hidden');
-                            }
-                        });
-                    </script>
-                {% else %}
-                    <a href="{% url 'create_team' %}" class="btn-primary flex items-center gap-2 shadow-md">
-                        <i class="fas fa-users"></i> Create a Team First
-                    </a>
-                {% endif %}
-
+                        <!-- Add Task Card -->
+                        <div class="bg-gradient-to-br from-pink-500 to-purple-500 rounded-2xl shadow-lg p-6 flex flex-col items-center justify-center text-white hover:scale-105 transition-transform cursor-pointer">
+                            <i class="fas fa-plus text-3xl mb-3"></i>
+                            <h3 class="text-lg font-bold mb-1">Add Task</h3>
+                            <p class="text-sm mb-4 text-pink-100">Quickly add a new task to your project.</p>
+                            {% if user_projects and user_projects|length > 0 %}
+                                <div class="relative w-full">
+                                    <select id="quickAddTaskProject" class="w-full px-3 py-2 rounded-lg text-gray-700 focus:outline-none focus:ring-2 focus:ring-pink-400 text-sm mb-2">
+                                        <option value="">Select Project</option>
+                                        {% for project in user_projects %}
+                                            <option value="{{ project.id }}">{{ project.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <a id="quickAddTaskBtn" href="#" class="bg-white text-pink-600 font-semibold px-4 py-2 rounded-lg shadow hover:bg-pink-50 transition block text-center">Add Task</a>
+                                </div>
+                                <script>
+                                    document.addEventListener('DOMContentLoaded', function() {
+                                        const btn = document.getElementById('quickAddTaskBtn');
+                                        const select = document.getElementById('quickAddTaskProject');
+                                        btn.addEventListener('click', function(e) {
+                                            e.preventDefault();
+                                            if (select.value) {
+                                                window.location.href = `/task/create/${select.value}`;
+                                            }
+                                        });
+                                    });
+                                </script>
+                            {% else %}
+                                <a href="{% url 'create_team' %}" class="bg-white text-pink-600 font-semibold px-4 py-2 rounded-lg shadow hover:bg-pink-50 transition block text-center">Create a Team First</a>
+                            {% endif %}
                         </div>
                     </div>
                 </div>
@@ -95,6 +110,48 @@
                             <span class="text-red-600 text-3xl font-extrabold">{{ urgent_tasks.count }}</span>
                             <span class="text-xs text-gray-500 mt-1">Urgent</span>
                         </div>
+                    </div>
+                </div>
+                <!-- My Tasks Section -->
+                <div class="bg-white rounded-2xl shadow-lg p-6 mb-4 border-t-4 border-pink-500 hover:shadow-2xl transition-all duration-200">
+                    <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2"><i class="fas fa-user-check text-pink-500"></i> My Tasks</h3>
+                    <div class="divide-y">
+                        {% if my_tasks and my_tasks|length > 0 %}
+                            {% for task in my_tasks %}
+                                <div class="py-4 flex items-center justify-between hover:bg-pink-50 transition cursor-pointer rounded-lg">
+                                    <div class="flex-1">
+                                        <a href="{% url 'task_detail' task.id %}" class="font-semibold text-gray-900 hover:text-pink-600 transition text-lg">{{ task.title }}</a>
+                                        <p class="text-gray-600 text-sm mt-1">{{ task.description|truncatewords:15 }}</p>
+                                        <div class="flex items-center gap-3 mt-2">
+                                            <span class="inline-block px-2 py-1 text-xs font-semibold rounded-full badge
+                                                {% if task.status == 'todo' %}badge-warning{% elif task.status == 'in_progress' %}bg-blue-100 text-blue-800{% elif task.status == 'in_review' %}bg-purple-100 text-purple-800{% elif task.status == 'completed' %}badge-success{% else %}bg-gray-100 text-gray-800{% endif %}">
+                                                {{ task.get_status_display }}
+                                            </span>
+                                            <span class="inline-block px-2 py-1 text-xs font-semibold rounded-full badge
+                                                {% if task.priority == 'urgent' %}badge-danger{% elif task.priority == 'high' %}bg-orange-100 text-orange-800{% elif task.priority == 'medium' %}badge-warning{% else %}badge-success{% endif %}">
+                                                {{ task.get_priority_display }}
+                                            </span>
+                                            {% if task.due_date %}
+                                                <span class="text-xs text-gray-600">
+                                                    <i class="fas fa-calendar mr-1"></i>{{ task.due_date|date:"M d, Y" }}
+                                                </span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="ml-4">
+                                        <div class="w-10 h-10 rounded-full bg-gradient-to-r from-pink-500 to-purple-500 flex items-center justify-center text-white font-bold text-sm shadow" title="{{ task.author.username }}">
+                                            {{ task.author.username|first|upper }}
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="py-8 flex flex-col items-center justify-center text-gray-400">
+                                <img src="https://cdn.jsdelivr.net/gh/edent/SuperTinyIcons/images/svg/user.svg" alt="No tasks" class="w-12 h-12 mb-2 opacity-60" loading="lazy">
+                                <div class="text-base font-medium">You have no assigned tasks.</div>
+                                <div class="text-xs mt-1">Tasks assigned to you will appear here.</div>
+                            </div>
+                        {% endif %}
                     </div>
                 </div>
             </div>

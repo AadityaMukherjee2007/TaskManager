@@ -28,6 +28,43 @@
                 <a href="{% url 'settings' %}" class="flex items-center gap-3 px-3 py-2 rounded-lg font-medium text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition">
                     <i class="fas fa-cog"></i> Settings
                 </a>
+
+                <!-- Teams Sidebar Section -->
+                <div class="mt-6">
+                    <div class="text-xs font-semibold text-gray-400 uppercase mb-2 tracking-wider">Teams</div>
+                    {% if teams and teams|length > 0 %}
+                        <ul class="space-y-1">
+                            {% for team in teams %}
+                                <li>
+                                    <a href="{% url 'team_tasks' team.id %}" class="flex items-center gap-2 px-3 py-2 rounded-lg text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition">
+                                        <i class="fas fa-users text-blue-400"></i> {{ team.name }}
+                                    </a>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <div class="text-xs text-gray-400 px-3 py-2">No teams</div>
+                    {% endif %}
+                    <a href="{% url 'create_team' %}" class="block mt-2 px-3 py-2 rounded-lg text-blue-600 hover:bg-blue-50 font-medium transition text-sm"><i class="fas fa-plus mr-1"></i> Create Team</a>
+                </div>
+
+                <!-- Projects Sidebar Section -->
+                <div class="mt-6">
+                    <div class="text-xs font-semibold text-gray-400 uppercase mb-2 tracking-wider">Projects</div>
+                    {% if user_projects and user_projects|length > 0 %}
+                        <ul class="space-y-1">
+                            {% for project in user_projects %}
+                                <li>
+                                    <a href="{% url 'project_tasks' project.id %}" class="flex items-center gap-2 px-3 py-2 rounded-lg text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition">
+                                        <i class="fas fa-folder text-indigo-400"></i> {{ project.name }}
+                                    </a>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <div class="text-xs text-gray-400 px-3 py-2">No projects</div>
+                    {% endif %}
+                </div>
             </nav>
             <div class="mt-auto">
                 <a href="{% url 'logout' %}" class="flex items-center gap-3 px-3 py-2 rounded-lg font-medium text-red-600 hover:bg-red-50 transition">
@@ -40,9 +77,11 @@
             <!-- Topbar -->
             <header class="h-16 bg-white border-b border-gray-200 flex items-center px-8 justify-between">
                 <div class="flex items-center gap-4">
-                    <form class="relative" autocomplete="off">
-                        <input type="text" placeholder="Search tasks, projects..." class="w-64 px-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm bg-gray-50" />
-                        <i class="fas fa-search absolute right-3 top-3 text-gray-400"></i>
+                    <form class="relative" autocomplete="off" action="{% url 'dashboard' %}" method="get">
+                        <input type="text" name="search" value="{{ search_query|default:'' }}" placeholder="Search tasks, projects..." class="w-64 px-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm bg-gray-50" />
+                        <button type="submit" class="absolute right-3 top-3 text-gray-400 hover:text-blue-600 focus:outline-none">
+                            <i class="fas fa-search"></i>
+                        </button>
                     </form>
                 </div>
                 <div class="flex items-center gap-4">
