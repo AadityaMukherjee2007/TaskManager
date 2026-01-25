@@ -136,18 +136,14 @@ STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "static"
 
 # Email Configuration
-# For development, use console backend (prints emails to console)
-# For production, use SMTP or other email service
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'  # Use SMTP backend for real email sending
-# EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'  # Use console backend for development
-
-# SMTP Configuration (uncomment for production)
-EMAIL_HOST = 'smtp.gmail.com'  # or your email service provider
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
-EMAIL_HOST_USER = os.getenv('USER_EMAIL', 'automyxautomations@gmail.com')
+# All values loaded from .env for flexibility
+EMAIL_BACKEND = os.getenv('EMAIL_BACKEND', 'django.core.mail.backends.console.EmailBackend')
+EMAIL_HOST = os.getenv('EMAIL_HOST', 'smtp.gmail.com')
+EMAIL_PORT = int(os.getenv('EMAIL_PORT', 587))
+EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', 'True').lower() in ['true', '1', 'yes']
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', 'automyxautomations@gmail.com')
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
-DEFAULT_FROM_EMAIL = os.getenv('USER_EMAIL', 'automyxautomations@gmail.com')
+DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', EMAIL_HOST_USER)
 
 # File upload settings
 MEDIA_URL = '/media/'
