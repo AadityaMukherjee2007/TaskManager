@@ -9,24 +9,69 @@ from django.conf import settings
 from django.db.models.signals import post_save
 @receiver(post_save, sender=Task)
 def send_task_notification(sender, instance, created, **kwargs):
+    print("[DEBUG] Task post_save signal fired.")
     assignee = instance.assignee
+    print(f"[DEBUG] Assignee: {assignee}")
     if not assignee:
+        print("[DEBUG] No assignee, skipping Telegram notification.")
         return
     try:
         profile = assignee.profile
+        print(f"[DEBUG] UserProfile found: {profile}")
     except UserProfile.DoesNotExist:
+        print("[DEBUG] UserProfile does not exist for assignee.")
         return
+    print(f"[DEBUG] enable_telegram_notifications: {profile.enable_telegram_notifications}, telegram_chat_id: {profile.telegram_chat_id}")
     if not profile.enable_telegram_notifications or not profile.telegram_chat_id:
+        print("[DEBUG] Telegram notifications not enabled or chat_id missing.")
         return
+
+    # Respect per-event notification toggles
+    # Only send if user wants notifications for assignment or completion
     if created:
-        message = f"You have been assigned a new task: {instance.title}"
+        if not getattr(profile, 'notify_on_task_assignment', True):
+            print("[DEBUG] User has disabled task assignment notifications.")
+            return
+        message = (
+            f"🔔 *New Task Assigned*\n\n"
+            f"Hello {assignee.get_full_name() or assignee.username},\n\n"
+            f"You have been assigned a new task in TaskManager.\n\n"
+            f"*Task:* {instance.title}\n"
+            f"*Project:* {instance.project.name if instance.project else 'N/A'}\n"
+            f"*Due Date:* {instance.due_date if instance.due_date else 'Not set'}\n\n"
+            f"Please review the task details and get started.\n\n"
+            f"Thank you for your collaboration!\n"
+            f"— TaskManager Team"
+        )
+    elif instance.status == 'completed':
+        if not getattr(profile, 'notify_on_task_completion', True):
+            print("[DEBUG] User has disabled task completion notifications.")
+            return
+        message = (
+            f"✅ *Task Completed*\n\n"
+            f"The following task has been marked as completed:\n\n"
+            f"*Task:* {instance.title}\n"
+            f"*Project:* {instance.project.name if instance.project else 'N/A'}\n\n"
+            f"Great job!\n"
+            f"— TaskManager Team"
+        )
     else:
-        message = f"Task updated: {instance.title} (Status: {instance.status})"
+        message = (
+            f"✏️ *Task Updated*\n\n"
+            f"The following task has been updated:\n\n"
+            f"*Task:* {instance.title}\n"
+            f"*Project:* {instance.project.name if instance.project else 'N/A'}\n"
+            f"*Status:* {instance.get_status_display()}\n"
+            f"*Priority:* {instance.get_priority_display()}\n\n"
+            f"Please check TaskManager for more details.\n"
+            f"— TaskManager Team"
+        )
+    print(f"[DEBUG] Sending Telegram message: {message}")
     try:
         send_telegram_message(profile.telegram_chat_id, message)
+        print("[DEBUG] Telegram message sent successfully.")
     except Exception as e:
-        # Optionally log the error
-        pass
+        print(f"[DEBUG] Error sending Telegram message: {e}")
 
 
 @receiver(post_save, sender=User)

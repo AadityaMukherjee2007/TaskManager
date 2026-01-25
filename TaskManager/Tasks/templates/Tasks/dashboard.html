@@ -3,82 +3,80 @@
 {% block title %}Dashboard - TaskManager{% endblock %}
 
 {% block body %}
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 relative bg-gradient-to-br from-gray-50 to-white min-h-screen">
         <!-- Welcome Section -->
-        <div class="mb-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div class="mb-10 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
             <div>
-                <h1 class="text-4xl font-extrabold text-gray-900 tracking-tight">Welcome, <span class="text-indigo-600">{{ user.username }}</span>!</h1>
-                <p class="text-gray-600 mt-2 text-lg">Here's an overview of your tasks and team activities.</p>
+                <h1 class="text-4xl font-black text-gray-900 tracking-tight mb-2">Welcome, <span class="text-indigo-600">{{ user.username }}</span>!</h1>
+                <p class="text-gray-500 mt-1 text-lg font-medium">Your personalized dashboard for productivity and collaboration.</p>
             </div>
-            <div class="flex gap-2 flex-wrap justify-end">
+            <div class="flex gap-4 flex-wrap justify-end">
                 <!-- Modern Quick Actions Section -->
-                <div class="mb-8">
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="mb-0">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
                         <!-- Create Team Card -->
-                        <div class="bg-gradient-to-br from-indigo-500 to-blue-500 rounded-2xl shadow-lg p-6 flex flex-col items-center justify-center text-white hover:scale-105 transition-transform cursor-pointer">
+                        <div class="bg-gradient-to-br from-indigo-600 to-blue-500 rounded-2xl shadow-xl p-7 flex flex-col items-center justify-center text-white hover:scale-105 transition-transform cursor-pointer border border-indigo-100">
                             <i class="fas fa-users text-3xl mb-3"></i>
                             <h3 class="text-lg font-bold mb-1">Create Team</h3>
                             <p class="text-sm mb-4 text-indigo-100">Start collaborating by creating a new team.</p>
                             <a href="{% url 'create_team' %}" class="bg-white text-indigo-600 font-semibold px-4 py-2 rounded-lg shadow hover:bg-indigo-50 transition">New Team</a>
                         </div>
                         <!-- Add Project Card -->
-                        <div class="bg-gradient-to-br from-green-400 to-blue-400 rounded-2xl shadow-lg p-6 flex flex-col items-center justify-center text-white hover:scale-105 transition-transform cursor-pointer">
+                        <div class="bg-gradient-to-br from-green-500 to-blue-400 rounded-2xl shadow-xl p-7 flex flex-col items-center justify-center text-white hover:scale-105 transition-transform cursor-pointer border border-green-100">
                             <i class="fas fa-folder-plus text-3xl mb-3"></i>
                             <h3 class="text-lg font-bold mb-1">Add Project</h3>
                             <p class="text-sm mb-4 text-green-100">Organize your work by adding a project to a team.</p>
                             {% if teams and teams|length > 0 %}
-                                <div class="relative w-full">
-                                    <select id="quickAddProjectTeam" class="w-full px-3 py-2 rounded-lg text-gray-700 focus:outline-none focus:ring-2 focus:ring-green-400 text-sm mb-2">
-                                        <option value="">Select Team</option>
-                                        {% for team in teams %}
-                                            <option value="{{ team.id }}">{{ team.name }}</option>
-                                        {% endfor %}
-                                    </select>
-                                    <a id="quickAddProjectBtn" href="#" class="bg-white text-green-600 font-semibold px-4 py-2 rounded-lg shadow hover:bg-green-50 transition block text-center">Add Project</a>
+                                <div x-data="{ open: false, search: '', selected: null, teams: [
+                                    {% for team in teams %}{ id: {{ team.id }}, name: '{{ team.name|escapejs }}' },{% endfor %}
+                                ] }" class="relative w-full">
+                                    <button @click="open = !open" type="button" class="w-full px-3 py-2 rounded-lg text-gray-700 bg-white border border-gray-200 shadow hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-green-400 text-sm mb-2 flex items-center justify-between">
+                                        <span x-text="selected ? teams.find(t => t.id == selected).name : 'Select Team'"></span>
+                                        <i class="fas fa-chevron-down ml-2"></i>
+                                    </button>
+                                    <div x-show="open" @click.away="open = false" class="absolute z-10 mt-1 w-full bg-white border border-green-200 rounded-xl shadow-2xl max-h-48 overflow-y-auto">
+                                        <input x-model="search" type="text" placeholder="Search team..." class="w-full px-3 py-2 border-b border-gray-100 text-sm focus:outline-none" />
+                                        <template x-for="team in teams.filter(t => t.name.toLowerCase().includes(search.toLowerCase()))" :key="team.id">
+                                            <div @click="selected = team.id; open = false" class="px-4 py-2 flex items-center gap-2 cursor-pointer hover:bg-green-100 transition text-gray-800" :class="{ 'bg-green-100': selected === team.id }">
+                                                <i class="fas fa-users text-green-500"></i>
+                                                <span x-text="team.name"></span>
+                                            </div>
+                                        </template>
+                                        <div x-show="teams.filter(t => t.name.toLowerCase().includes(search.toLowerCase())).length === 0" class="px-4 py-2 text-gray-400 text-sm">No teams found.</div>
+                                    </div>
+                                    <a :href="selected ? `/project/create/${selected}` : '#'" :class="selected ? 'bg-green-600 text-white hover:bg-green-700' : 'bg-gray-200 text-gray-400 cursor-not-allowed'" class="mt-2 font-semibold px-4 py-2 rounded-lg shadow transition block text-center">Add Project</a>
                                 </div>
-                                <script>
-                                    document.addEventListener('DOMContentLoaded', function() {
-                                        const btn = document.getElementById('quickAddProjectBtn');
-                                        const select = document.getElementById('quickAddProjectTeam');
-                                        btn.addEventListener('click', function(e) {
-                                            e.preventDefault();
-                                            if (select.value) {
-                                                window.location.href = `/project/create/${select.value}`;
-                                            }
-                                        });
-                                    });
-                                </script>
+                                <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
                             {% else %}
                                 <a href="{% url 'create_team' %}" class="bg-white text-green-600 font-semibold px-4 py-2 rounded-lg shadow hover:bg-green-50 transition block text-center">Create a Team First</a>
                             {% endif %}
                         </div>
                         <!-- Add Task Card -->
-                        <div class="bg-gradient-to-br from-pink-500 to-purple-500 rounded-2xl shadow-lg p-6 flex flex-col items-center justify-center text-white hover:scale-105 transition-transform cursor-pointer">
+                        <div class="bg-gradient-to-br from-pink-500 to-purple-500 rounded-2xl shadow-xl p-7 flex flex-col items-center justify-center text-white hover:scale-105 transition-transform cursor-pointer border border-pink-100">
                             <i class="fas fa-plus text-3xl mb-3"></i>
                             <h3 class="text-lg font-bold mb-1">Add Task</h3>
                             <p class="text-sm mb-4 text-pink-100">Quickly add a new task to your project.</p>
                             {% if user_projects and user_projects|length > 0 %}
-                                <div class="relative w-full">
-                                    <select id="quickAddTaskProject" class="w-full px-3 py-2 rounded-lg text-gray-700 focus:outline-none focus:ring-2 focus:ring-pink-400 text-sm mb-2">
-                                        <option value="">Select Project</option>
-                                        {% for project in user_projects %}
-                                            <option value="{{ project.id }}">{{ project.name }}</option>
-                                        {% endfor %}
-                                    </select>
-                                    <a id="quickAddTaskBtn" href="#" class="bg-white text-pink-600 font-semibold px-4 py-2 rounded-lg shadow hover:bg-pink-50 transition block text-center">Add Task</a>
+                                <div x-data="{ open: false, search: '', selected: null, projects: [
+                                    {% for project in user_projects %}{ id: {{ project.id }}, name: '{{ project.name|escapejs }}' },{% endfor %}
+                                ] }" class="relative w-full">
+                                    <button @click="open = !open" type="button" class="w-full px-3 py-2 rounded-lg text-gray-700 bg-white border border-gray-200 shadow hover:bg-pink-50 focus:outline-none focus:ring-2 focus:ring-pink-400 text-sm mb-2 flex items-center justify-between">
+                                        <span x-text="selected ? projects.find(p => p.id == selected).name : 'Select Project'"></span>
+                                        <i class="fas fa-chevron-down ml-2"></i>
+                                    </button>
+                                    <div x-show="open" @click.away="open = false" class="absolute z-10 mt-1 w-full bg-white border border-pink-200 rounded-xl shadow-2xl max-h-48 overflow-y-auto">
+                                        <input x-model="search" type="text" placeholder="Search project..." class="w-full px-3 py-2 border-b border-gray-100 text-sm focus:outline-none" />
+                                        <template x-for="project in projects.filter(p => p.name.toLowerCase().includes(search.toLowerCase()))" :key="project.id">
+                                            <div @click="selected = project.id; open = false" class="px-4 py-2 flex items-center gap-2 cursor-pointer hover:bg-pink-100 transition text-gray-800" :class="{ 'bg-pink-100': selected === project.id }">
+                                                <i class="fas fa-folder text-pink-500"></i>
+                                                <span x-text="project.name"></span>
+                                            </div>
+                                        </template>
+                                        <div x-show="projects.filter(p => p.name.toLowerCase().includes(search.toLowerCase())).length === 0" class="px-4 py-2 text-gray-400 text-sm">No projects found.</div>
+                                    </div>
+                                    <a :href="selected ? `/project/${selected}/create-task` : '#'" :class="selected ? 'bg-pink-600 text-white hover:bg-pink-700' : 'bg-gray-200 text-gray-400 cursor-not-allowed'" class="mt-2 font-semibold px-4 py-2 rounded-lg shadow transition block text-center">Add Task</a>
                                 </div>
-                                <script>
-                                    document.addEventListener('DOMContentLoaded', function() {
-                                        const btn = document.getElementById('quickAddTaskBtn');
-                                        const select = document.getElementById('quickAddTaskProject');
-                                        btn.addEventListener('click', function(e) {
-                                            e.preventDefault();
-                                            if (select.value) {
-                                                window.location.href = `/task/create/${select.value}`;
-                                            }
-                                        });
-                                    });
-                                </script>
+                                <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
                             {% else %}
                                 <a href="{% url 'create_team' %}" class="bg-white text-pink-600 font-semibold px-4 py-2 rounded-lg shadow hover:bg-pink-50 transition block text-center">Create a Team First</a>
                             {% endif %}
@@ -88,78 +86,104 @@
             </div>
         </div>
         <!-- Dashboard Content -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-10">
             <!-- Left Column: Task Summary -->
             <div class="lg:col-span-1 space-y-8">
-                <div class="bg-white rounded-2xl shadow-lg p-6 mb-4 border-t-4 border-indigo-500 hover:shadow-2xl transition-all duration-200">
-                    <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2"><i class="fas fa-chart-pie text-indigo-500"></i> Task Summary</h3>
-                    <div class="grid grid-cols-2 md:grid-cols-2 gap-6">
+                <div class="bg-gradient-to-br from-white to-indigo-50 rounded-2xl shadow-xl p-7 mb-4 border-t-4 border-indigo-500 hover:shadow-2xl transition-all duration-200">
+                    <h3 class="text-lg font-extrabold text-gray-900 mb-6 flex items-center gap-2"><i class="fas fa-chart-pie text-indigo-500"></i> Task Summary</h3>
+                    <div class="grid grid-cols-2 md:grid-cols-2 gap-8">
                         <div class="flex flex-col items-center">
-                            <span class="text-blue-600 text-3xl font-extrabold">{{ pending }}</span>
-                            <span class="text-xs text-gray-500 mt-1">To Do</span>
+                            <span class="text-blue-600 text-4xl font-black">{{ pending }}</span>
+                            <span class="text-xs text-gray-500 mt-2 tracking-wide uppercase">To Do</span>
                         </div>
                         <div class="flex flex-col items-center">
-                            <span class="text-yellow-600 text-3xl font-extrabold">{{ in_progress }}</span>
-                            <span class="text-xs text-gray-500 mt-1">In Progress</span>
+                            <span class="text-yellow-600 text-4xl font-black">{{ in_progress }}</span>
+                            <span class="text-xs text-gray-500 mt-2 tracking-wide uppercase">In Progress</span>
                         </div>
                         <div class="flex flex-col items-center">
-                            <span class="text-green-600 text-3xl font-extrabold">{{ completed }}</span>
-                            <span class="text-xs text-gray-500 mt-1">Completed</span>
+                            <span class="text-green-600 text-4xl font-black">{{ completed }}</span>
+                            <span class="text-xs text-gray-500 mt-2 tracking-wide uppercase">Completed</span>
                         </div>
                         <div class="flex flex-col items-center">
-                            <span class="text-red-600 text-3xl font-extrabold">{{ urgent_tasks.count }}</span>
-                            <span class="text-xs text-gray-500 mt-1">Urgent</span>
+                            <span class="text-red-600 text-4xl font-black">{{ urgent_tasks.count }}</span>
+                            <span class="text-xs text-gray-500 mt-2 tracking-wide uppercase">Urgent</span>
                         </div>
                     </div>
                 </div>
-                <!-- My Tasks Section -->
-                <div class="bg-white rounded-2xl shadow-lg p-6 mb-4 border-t-4 border-pink-500 hover:shadow-2xl transition-all duration-200">
-                    <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2"><i class="fas fa-user-check text-pink-500"></i> My Tasks</h3>
-                    <div class="divide-y">
-                        {% if my_tasks and my_tasks|length > 0 %}
-                            {% for task in my_tasks %}
-                                <div class="py-4 flex items-center justify-between hover:bg-pink-50 transition cursor-pointer rounded-lg">
-                                    <div class="flex-1">
-                                        <a href="{% url 'task_detail' task.id %}" class="font-semibold text-gray-900 hover:text-pink-600 transition text-lg">{{ task.title }}</a>
-                                        <p class="text-gray-600 text-sm mt-1">{{ task.description|truncatewords:15 }}</p>
-                                        <div class="flex items-center gap-3 mt-2">
-                                            <span class="inline-block px-2 py-1 text-xs font-semibold rounded-full badge
-                                                {% if task.status == 'todo' %}badge-warning{% elif task.status == 'in_progress' %}bg-blue-100 text-blue-800{% elif task.status == 'in_review' %}bg-purple-100 text-purple-800{% elif task.status == 'completed' %}badge-success{% else %}bg-gray-100 text-gray-800{% endif %}">
-                                                {{ task.get_status_display }}
+                
+            </div>
+            <!-- Right Column: Recent Activities & Tasks -->
+            <div class="lg:col-span-2 space-y-10">
+                <div class="bg-gradient-to-br from-white to-green-50 rounded-2xl shadow-xl p-7 mb-4 border-t-4 border-green-500 hover:shadow-2xl transition-all duration-200">
+                    <h3 class="text-lg font-extrabold text-gray-900 mb-6 flex items-center gap-2">
+                        <i class="fas fa-tasks text-green-500"></i> Recent Tasks
+                        {% if search_query %}
+                            <span class="ml-2 px-2 py-1 bg-blue-100 text-blue-700 text-xs font-semibold rounded">Search: "{{ search_query }}"</span>
+                        {% endif %}
+                    </h3>
+                    <div class="space-y-4 overflow-y-auto" style="max-height: 350px; min-height: 100px;">
+                        {% if recent_tasks %}
+                            {% for task in recent_tasks %}
+                                <div class="group flex items-center gap-4 bg-gradient-to-br from-white to-gray-50 border border-gray-200 rounded-xl shadow-md hover:shadow-xl transition-all duration-200 p-4 relative">
+                                    <div class="flex flex-col items-center justify-center mr-2">
+                                        <div class="w-12 h-12 rounded-full bg-gradient-to-r from-blue-500 to-indigo-500 flex items-center justify-center text-white font-bold text-lg shadow" title="Author: {{ task.author.username }}">
+                                            {{ task.author.username|first|upper }}
+                                        </div>
+                                        <span class="text-xs text-gray-500 mt-1" title="Task Author">{{ task.author.username }}</span>
+                                    </div>
+                                    <div class="flex-1 min-w-0">
+                                        <div class="flex items-center gap-2 mb-1">
+                                            <a href="{% url 'task_detail' task.id %}" class="font-bold text-gray-900 hover:text-green-600 text-lg truncate" title="View Task">{{ task.title }}</a>
+                                            {% if task.priority == 'urgent' %}
+                                                <i class="fas fa-exclamation-circle text-red-500" title="Urgent"></i>
+                                            {% elif task.priority == 'high' %}
+                                                <i class="fas fa-arrow-up text-orange-400" title="High Priority"></i>
+                                            {% elif task.priority == 'medium' %}
+                                                <i class="fas fa-arrow-right text-yellow-400" title="Medium Priority"></i>
+                                            {% endif %}
+                                        </div>
+                                        <p class="text-gray-600 text-sm mb-2 truncate">{{ task.description|truncatewords:15 }}</p>
+                                        <div class="flex flex-wrap items-center gap-2 mt-1">
+                                            <span class="inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full
+                                                {% if task.status == 'todo' %}bg-yellow-100 text-yellow-800{% elif task.status == 'in_progress' %}bg-blue-100 text-blue-800{% elif task.status == 'in_review' %}bg-purple-100 text-purple-800{% elif task.status == 'completed' %}bg-green-100 text-green-800{% else %}bg-gray-100 text-gray-800{% endif %}"
+                                                title="Status: {{ task.get_status_display }}">
+                                                <i class="fas fa-info-circle mr-1"></i>{{ task.get_status_display }}
                                             </span>
-                                            <span class="inline-block px-2 py-1 text-xs font-semibold rounded-full badge
-                                                {% if task.priority == 'urgent' %}badge-danger{% elif task.priority == 'high' %}bg-orange-100 text-orange-800{% elif task.priority == 'medium' %}badge-warning{% else %}badge-success{% endif %}">
-                                                {{ task.get_priority_display }}
+                                            <span class="inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full
+                                                {% if task.priority == 'urgent' %}bg-red-100 text-red-700{% elif task.priority == 'high' %}bg-orange-100 text-orange-800{% elif task.priority == 'medium' %}bg-yellow-100 text-yellow-800{% else %}bg-green-100 text-green-800{% endif %}"
+                                                title="Priority: {{ task.get_priority_display }}">
+                                                <i class="fas fa-bolt mr-1"></i>{{ task.get_priority_display }}
                                             </span>
                                             {% if task.due_date %}
-                                                <span class="text-xs text-gray-600">
+                                                <span class="inline-flex items-center px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-700" title="Due: {{ task.due_date|date:'l, F d, Y' }}">
                                                     <i class="fas fa-calendar mr-1"></i>{{ task.due_date|date:"M d, Y" }}
                                                 </span>
                                             {% endif %}
+                                            {% if task.assignee %}
+                                                <span class="inline-flex items-center px-2 py-1 text-xs font-medium rounded-full bg-indigo-100 text-indigo-700" title="Assigned to: {{ task.assignee.username }}">
+                                                    <i class="fas fa-user mr-1"></i>{{ task.assignee.username }}
+                                                </span>
+                                            {% endif %}
                                         </div>
+                                        {# Progress bar removed as requested #}
                                     </div>
-                                    <div class="ml-4">
-                                        <div class="w-10 h-10 rounded-full bg-gradient-to-r from-pink-500 to-purple-500 flex items-center justify-center text-white font-bold text-sm shadow" title="{{ task.author.username }}">
-                                            {{ task.author.username|first|upper }}
-                                        </div>
-                                    </div>
+                                    {% if task.priority == 'urgent' %}
+                                        <span class="absolute top-2 right-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded shadow" title="Urgent">URGENT</span>
+                                    {% endif %}
                                 </div>
                             {% endfor %}
                         {% else %}
                             <div class="py-8 flex flex-col items-center justify-center text-gray-400">
-                                <img src="https://cdn.jsdelivr.net/gh/edent/SuperTinyIcons/images/svg/user.svg" alt="No tasks" class="w-12 h-12 mb-2 opacity-60" loading="lazy">
-                                <div class="text-base font-medium">You have no assigned tasks.</div>
-                                <div class="text-xs mt-1">Tasks assigned to you will appear here.</div>
+                                <img src="https://cdn.jsdelivr.net/gh/edent/SuperTinyIcons/images/svg/clipboard.svg" alt="No tasks" class="w-12 h-12 mb-2 opacity-60" loading="lazy">
+                                <div class="text-base font-medium">No recent tasks.</div>
+                                <div class="text-xs mt-1">Your latest tasks will appear here.</div>
                             </div>
                         {% endif %}
                     </div>
                 </div>
-            </div>
-            <!-- Right Column: Recent Activities & Tasks -->
-            <div class="lg:col-span-2 space-y-8">
-                <div class="bg-white rounded-2xl shadow-lg p-6 mb-4 border-t-4 border-blue-500 hover:shadow-2xl transition-all duration-200">
-                    <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2"><i class="fas fa-bolt text-blue-500"></i> Recent Activities</h3>
-                    <div class="divide-y">
+                <div class="bg-gradient-to-br from-white to-blue-50 rounded-2xl shadow-xl p-7 mb-4 border-t-4 border-blue-500 hover:shadow-2xl transition-all duration-200">
+                    <h3 class="text-lg font-extrabold text-gray-900 mb-6 flex items-center gap-2"><i class="fas fa-bolt text-blue-500"></i> Recent Activities</h3>
+                    <div class="divide-y overflow-y-auto" style="max-height: 350px; min-height: 100px;">
                         {% if recent_activities %}
                             {% for activity in recent_activities %}
                                 <div class="py-4 flex items-center gap-3 hover:bg-blue-50 transition cursor-pointer rounded-lg">
@@ -182,51 +206,10 @@
                         {% endif %}
                     </div>
                 </div>
-                <div class="bg-white rounded-2xl shadow-lg p-6 mb-4 border-t-4 border-green-500 hover:shadow-2xl transition-all duration-200">
-                    <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2"><i class="fas fa-tasks text-green-500"></i> Recent Tasks</h3>
-                    <div class="divide-y">
-                        {% if recent_tasks %}
-                            {% for task in recent_tasks %}
-                                <div class="py-4 flex items-center justify-between hover:bg-green-50 transition cursor-pointer rounded-lg">
-                                    <div class="flex-1">
-                                        <a href="{% url 'task_detail' task.id %}" class="font-semibold text-gray-900 hover:text-green-600 transition text-lg">{{ task.title }}</a>
-                                        <p class="text-gray-600 text-sm mt-1">{{ task.description|truncatewords:15 }}</p>
-                                        <div class="flex items-center gap-3 mt-2">
-                                            <span class="inline-block px-2 py-1 text-xs font-semibold rounded-full badge
-                                                {% if task.status == 'todo' %}badge-warning{% elif task.status == 'in_progress' %}bg-blue-100 text-blue-800{% elif task.status == 'in_review' %}bg-purple-100 text-purple-800{% elif task.status == 'completed' %}badge-success{% else %}bg-gray-100 text-gray-800{% endif %}">
-                                                {{ task.get_status_display }}
-                                            </span>
-                                            <span class="inline-block px-2 py-1 text-xs font-semibold rounded-full badge
-                                                {% if task.priority == 'urgent' %}badge-danger{% elif task.priority == 'high' %}bg-orange-100 text-orange-800{% elif task.priority == 'medium' %}badge-warning{% else %}badge-success{% endif %}">
-                                                {{ task.get_priority_display }}
-                                            </span>
-                                            {% if task.due_date %}
-                                                <span class="text-xs text-gray-600">
-                                                    <i class="fas fa-calendar mr-1"></i>{{ task.due_date|date:"M d, Y" }}
-                                                </span>
-                                            {% endif %}
-                                        </div>
-                                    </div>
-                                    <div class="ml-4">
-                                        <div class="w-10 h-10 rounded-full bg-gradient-to-r from-blue-500 to-indigo-500 flex items-center justify-center text-white font-bold text-sm shadow" title="{{ task.author.username }}">
-                                            {{ task.author.username|first|upper }}
-                                        </div>
-                                    </div>
-                                </div>
-                            {% endfor %}
-                        {% else %}
-                            <div class="py-8 flex flex-col items-center justify-center text-gray-400">
-                                <img src="https://cdn.jsdelivr.net/gh/edent/SuperTinyIcons/images/svg/clipboard.svg" alt="No tasks" class="w-12 h-12 mb-2 opacity-60" loading="lazy">
-                                <div class="text-base font-medium">No recent tasks.</div>
-                                <div class="text-xs mt-1">Your latest tasks will appear here.</div>
-                            </div>
-                        {% endif %}
-                    </div>
-                </div>
             </div>
         </div>
         <!-- Floating Add Button -->
-        <a href="#" id="floatingAddTask" class="fixed bottom-8 right-8 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full shadow-lg w-16 h-16 flex items-center justify-center text-3xl z-50 transition focus:outline-none focus:ring-4 focus:ring-indigo-300" title="Quick Add Task">
+        <a href="#" id="floatingAddTask" class="fixed bottom-8 right-8 bg-gradient-to-br from-indigo-500 to-blue-600 hover:from-indigo-600 hover:to-blue-700 text-white rounded-full shadow-2xl w-16 h-16 flex items-center justify-center text-3xl z-50 transition focus:outline-none focus:ring-4 focus:ring-indigo-300" title="Quick Add Task">
             <i class="fas fa-plus"></i>
         </a>
         <script>

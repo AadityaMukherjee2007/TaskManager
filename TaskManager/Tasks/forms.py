@@ -17,7 +17,7 @@ class TaskForm(forms.ModelForm):
     
     class Meta:
         model = Task
-        fields = ['title', 'description', 'priority', 'assignee', 'due_date', 'start_date']
+        fields = ['title', 'description', 'priority', 'assignee', 'due_date', 'start_date', 'status']
         widgets = {
             'title': forms.TextInput(attrs={
                 'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent',
@@ -40,6 +40,10 @@ class TaskForm(forms.ModelForm):
             'start_date': forms.DateInput(attrs={
                 'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent',
                 'type': 'date'
+            }),
+            'status': forms.Select(attrs={
+                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent',
+                'id': 'status'
             }),
         }
 

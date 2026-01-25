@@ -1,3 +1,6 @@
+import getpass
+import asyncio
+from Tasks.telegram_utils import send_telegram_message
 #!/usr/bin/env python
 """
 Test script to verify all TaskManager functionality
@@ -272,6 +275,17 @@ def main():
         print("✓ Task status and priority updates")
         print("✓ Activity logging")
         print("=" * 60)
+
+        # Telegram integration test
+        print("\n=== Telegram Integration Test ===")
+        chat_id = input("Enter your Telegram chat_id to test (find via @userinfobot): ")
+        test_message = f"Hello from TaskManager automated test! User: {getpass.getuser()}"
+        print(f"Sending test message to chat_id={chat_id}...")
+        result = asyncio.run(send_telegram_message(chat_id, test_message))
+        if result:
+            print("✓ Telegram message sent successfully!")
+        else:
+            print("✗ Telegram message failed. Check server logs for details.")
         
     except Exception as e:
         print(f"\n✗ TEST FAILED: {str(e)}")

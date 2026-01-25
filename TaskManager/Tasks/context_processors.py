@@ -1,3 +1,5 @@
+def search_query_context(request):
+    return {'search_query': request.GET.get('search', '').strip()}
 from .models import Team, Project
 from django.contrib.auth.models import AnonymousUser
 

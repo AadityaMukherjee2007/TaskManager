@@ -15,7 +15,9 @@ from pathlib import Path
 import os
 from dotenv import load_dotenv
 
-load_dotenv(os.path.join(Path(__file__).resolve().parent.parent, '.env'))
+dotenv_path = os.path.join(Path(__file__).resolve().parent.parent, '.env')
+load_dotenv(dotenv_path)
+print(f"[DEBUG] Loaded .env from: {dotenv_path}")
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -27,8 +29,13 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = "django-insecure-p-iu^1$yv9=s9qdgg2xgz&k-)@_8v*g!6gy7pj-qp9cez)6)d="
 
-# Telegram Bot Token
+# --- Telegram Bot Integration ---
+# Set your Telegram bot token in a .env file or as an environment variable for security
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
+print(f"[DEBUG] TELEGRAM_BOT_TOKEN in settings: {TELEGRAM_BOT_TOKEN}")
+# Example .env entry:
+# TELEGRAM_BOT_TOKEN=your-bot-token-here
+# --------------------------------
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -40,6 +47,7 @@ ALLOWED_HOSTS = []
 
 INSTALLED_APPS = [
     "Tasks",
+    "widget_tweaks",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -71,6 +79,7 @@ TEMPLATES = [
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
                 "Tasks.context_processors.sidebar_context",
+                "Tasks.context_processors.search_query_context",
             ],
         },
     },
@@ -142,6 +151,10 @@ DEFAULT_FROM_EMAIL = os.getenv('USER_EMAIL', 'automyxautomations@gmail.com')
 # File upload settings
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+
+# Access Telegram Bot Token from settings
+# Usage: from django.conf import settings; settings.
+TELEGRAM_BOT_TOKEN=os.getenv("TELEGRAM_BOT_TOKEN", "")
 
 # Security settings
 CSRF_TRUSTED_ORIGINS = ['http://localhost:8000', 'http://127.0.0.1:8000']

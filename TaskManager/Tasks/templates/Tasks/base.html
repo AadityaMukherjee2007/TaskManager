@@ -35,10 +35,15 @@
                     {% if teams and teams|length > 0 %}
                         <ul class="space-y-1">
                             {% for team in teams %}
-                                <li>
+                                <li class="relative group" oncontextmenu="showTeamMenu(event, {{ team.id }}, '{{ team.name|escapejs }}')">
                                     <a href="{% url 'team_tasks' team.id %}" class="flex items-center gap-2 px-3 py-2 rounded-lg text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition">
                                         <i class="fas fa-users text-blue-400"></i> {{ team.name }}
                                     </a>
+                                    <!-- Team Context Menu -->
+                                    <div id="team-menu-{{ team.id }}" class="hidden absolute left-32 top-2 z-50 bg-white border border-gray-200 rounded-lg shadow-lg w-40">
+                                        <button onclick="openRenameModal('team', {{ team.id }}, '{{ team.name|escapejs }}')" class="w-full text-left px-4 py-2 hover:bg-blue-50">Rename</button>
+                                        <button onclick="openDeleteModal('team', {{ team.id }}, '{{ team.name|escapejs }}')" class="w-full text-left px-4 py-2 hover:bg-red-50 text-red-600">Delete</button>
+                                    </div>
                                 </li>
                             {% endfor %}
                         </ul>
@@ -54,12 +59,155 @@
                     {% if user_projects and user_projects|length > 0 %}
                         <ul class="space-y-1">
                             {% for project in user_projects %}
-                                <li>
+                                <li class="relative group" oncontextmenu="showProjectMenu(event, {{ project.id }}, '{{ project.name|escapejs }}')">
                                     <a href="{% url 'project_tasks' project.id %}" class="flex items-center gap-2 px-3 py-2 rounded-lg text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition">
                                         <i class="fas fa-folder text-indigo-400"></i> {{ project.name }}
                                     </a>
+                                    <!-- Project Context Menu -->
+                                    <div id="project-menu-{{ project.id }}" class="hidden absolute left-32 top-2 z-50 bg-white border border-gray-200 rounded-lg shadow-lg w-40">
+                                        <button onclick="openRenameModal('project', {{ project.id }}, '{{ project.name|escapejs }}')" class="w-full text-left px-4 py-2 hover:bg-blue-50">Rename</button>
+                                        <button onclick="openDeleteModal('project', {{ project.id }}, '{{ project.name|escapejs }}')" class="w-full text-left px-4 py-2 hover:bg-red-50 text-red-600">Delete</button>
+                                    </div>
                                 </li>
                             {% endfor %}
+                                <!-- Rename/Delete Modal -->
+                                <div id="sidebarModal" class="hidden fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+                                    <div class="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md relative">
+                                        <button onclick="closeSidebarModal()" class="absolute top-3 right-3 text-gray-400 hover:text-red-500 text-xl">&times;</button>
+                                        <div id="sidebarModalContent"></div>
+                                    </div>
+                                </div>
+
+                                <script>
+                                // Hide all context menus on click elsewhere
+                                document.addEventListener('click', function(e) {
+                                    document.querySelectorAll('[id^="team-menu-"], [id^="project-menu-"]').forEach(function(menu) {
+                                        menu.classList.add('hidden');
+                                    });
+                                });
+                                function showTeamMenu(e, id, name) {
+                                    e.preventDefault();
+                                    document.querySelectorAll('[id^="team-menu-"]').forEach(m => m.classList.add('hidden'));
+                                    document.getElementById('team-menu-' + id).classList.remove('hidden');
+                                }
+                                function showProjectMenu(e, id, name) {
+                                    e.preventDefault();
+                                    document.querySelectorAll('[id^="project-menu-"]').forEach(m => m.classList.add('hidden'));
+                                    document.getElementById('project-menu-' + id).classList.remove('hidden');
+                                }
+                                function openRenameModal(type, id, name) {
+                                    closeAllMenus();
+                                    let label = type === 'team' ? 'Team' : 'Project';
+                                    document.getElementById('sidebarModalContent').innerHTML = `
+                                        <h2 class='text-2xl font-bold mb-4 text-gray-900'>Rename ${label}</h2>
+                                        <form onsubmit="event.preventDefault(); submitRename('${type}', ${id});">
+                                            <input type='text' id='renameInput' class='w-full px-4 py-2 border rounded-lg mb-4' value='${name}' autofocus />
+                                            <div class='flex gap-2 justify-end'>
+                                                <button type='button' onclick='closeSidebarModal()' class='px-4 py-2 bg-gray-200 text-gray-800 rounded-lg'>Cancel</button>
+                                                <button type='submit' class='px-4 py-2 bg-blue-600 text-white rounded-lg'>Rename</button>
+                                            </div>
+                                        </form>
+                                        <div id='renameError' class='text-red-600 mt-2 hidden'></div>
+                                    `;
+                                    document.getElementById('sidebarModal').classList.remove('hidden');
+                                }
+                                function openDeleteModal(type, id, name) {
+                                    closeAllMenus();
+                                    let label = type === 'team' ? 'Team' : 'Project';
+                                    document.getElementById('sidebarModalContent').innerHTML = `
+                                        <h2 class='text-2xl font-bold mb-4 text-gray-900'>Delete ${label}</h2>
+                                        <p class='mb-4'>Are you sure you want to delete <span class='font-semibold'>${name}</span>? This action cannot be undone.</p>
+                                        <div class='flex gap-2 justify-end'>
+                                            <button type='button' onclick='closeSidebarModal()' class='px-4 py-2 bg-gray-200 text-gray-800 rounded-lg'>Cancel</button>
+                                            <button type='button' onclick='submitDelete("${type}", ${id});' class='px-4 py-2 bg-red-600 text-white rounded-lg'>Delete</button>
+                                        </div>
+                                        <div id='deleteError' class='text-red-600 mt-2 hidden'></div>
+                                    `;
+                                    document.getElementById('sidebarModal').classList.remove('hidden');
+                                }
+                                function submitRename(type, id) {
+                                    let name = document.getElementById('renameInput').value.trim();
+                                    if (!name) {
+                                        document.getElementById('renameError').innerText = 'Name cannot be empty.';
+                                        document.getElementById('renameError').classList.remove('hidden');
+                                        return;
+                                    }
+                                    let url = type === 'team' ? `/team/${id}/rename` : `/project/${id}/rename`;
+                                    fetch(url, {
+                                        method: 'POST',
+                                        headers: {
+                                            'Content-Type': 'application/x-www-form-urlencoded',
+                                            'X-CSRFToken': getCSRFToken(),
+                                        },
+                                        body: `name=${encodeURIComponent(name)}`
+                                    })
+                                    .then(r => r.json())
+                                    .then(data => {
+                                        if (data.success) {
+                                            // Update sidebar name
+                                            if (type === 'team') {
+                                                document.querySelectorAll(`[oncontextmenu*="showTeamMenu(event, ${id},"] .flex.items-center.gap-2`).forEach(el => {
+                                                    el.childNodes[1].textContent = ' ' + data.name;
+                                                });
+                                            } else {
+                                                document.querySelectorAll(`[oncontextmenu*="showProjectMenu(event, ${id},"] .flex.items-center.gap-2`).forEach(el => {
+                                                    el.childNodes[1].textContent = ' ' + data.name;
+                                                });
+                                            }
+                                            closeSidebarModal();
+                                        } else {
+                                            document.getElementById('renameError').innerText = data.error || 'Error.';
+                                            document.getElementById('renameError').classList.remove('hidden');
+                                        }
+                                    });
+                                }
+                                function submitDelete(type, id) {
+                                    let url = type === 'team' ? `/team/${id}/delete` : `/project/${id}/delete`;
+                                    fetch(url, {
+                                        method: 'POST',
+                                        headers: {
+                                            'X-CSRFToken': getCSRFToken(),
+                                        }
+                                    })
+                                    .then(r => r.json())
+                                    .then(data => {
+                                        if (data.success) {
+                                            // Remove sidebar item
+                                            if (type === 'team') {
+                                                document.querySelectorAll(`[oncontextmenu*="showTeamMenu(event, ${id},"]`).forEach(el => el.remove());
+                                            } else {
+                                                document.querySelectorAll(`[oncontextmenu*="showProjectMenu(event, ${id},"]`).forEach(el => el.remove());
+                                            }
+                                            closeSidebarModal();
+                                        } else {
+                                            document.getElementById('deleteError').innerText = data.error || 'Error.';
+                                            document.getElementById('deleteError').classList.remove('hidden');
+                                        }
+                                    });
+                                }
+                                function getCSRFToken() {
+                                    let cookieValue = null;
+                                    if (document.cookie && document.cookie !== '') {
+                                        const cookies = document.cookie.split(';');
+                                        for (let i = 0; i < cookies.length; i++) {
+                                            const cookie = cookies[i].trim();
+                                            if (cookie.substring(0, 10) === ('csrftoken=')) {
+                                                cookieValue = decodeURIComponent(cookie.substring(10));
+                                                break;
+                                            }
+                                        }
+                                    }
+                                    return cookieValue;
+                                }
+                                function closeSidebarModal() {
+                                    document.getElementById('sidebarModal').classList.add('hidden');
+                                }
+                                function closeAllMenus() {
+                                    document.querySelectorAll('[id^="team-menu-"], [id^="project-menu-"]').forEach(function(menu) {
+                                        menu.classList.add('hidden');
+                                    });
+                                }
+                                </script>
                         </ul>
                     {% else %}
                         <div class="text-xs text-gray-400 px-3 py-2">No projects</div>
@@ -75,32 +223,56 @@
         <!-- Main Workspace -->
         <div class="flex-1 flex flex-col min-h-screen">
             <!-- Topbar -->
-            <header class="h-16 bg-white border-b border-gray-200 flex items-center px-8 justify-between">
+            <header class="h-16 bg-white border-b border-gray-200 flex items-center px-8 justify-end">
                 <div class="flex items-center gap-4">
-                    <form class="relative" autocomplete="off" action="{% url 'dashboard' %}" method="get">
-                        <input type="text" name="search" value="{{ search_query|default:'' }}" placeholder="Search tasks, projects..." class="w-64 px-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm bg-gray-50" />
-                        <button type="submit" class="absolute right-3 top-3 text-gray-400 hover:text-blue-600 focus:outline-none">
-                            <i class="fas fa-search"></i>
+                    <div class="relative" id="user-menu-container">
+                        <button type="button" class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100 transition focus:outline-none" id="user-menu-button">
+                            {% if request.user.is_authenticated and request.user.profile.avatar %}
+                                <img src="{{ request.user.profile.avatar.url }}" alt="Avatar" class="w-8 h-8 rounded-full">
+                            {% else %}
+                                <i class="fas fa-user-circle text-gray-700 text-2xl"></i>
+                            {% endif %}
+                            <span class="hidden sm:block text-gray-700 font-medium">{{ request.user.username }}</span>
+                            <i class="fas fa-chevron-down ml-1 text-gray-500"></i>
                         </button>
-                    </form>
-                </div>
-                <div class="flex items-center gap-4">
-                    <a href="{% url 'profile' %}" class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100 transition">
-                        {% if request.user.is_authenticated and request.user.profile.avatar %}
-                            <img src="{{ request.user.profile.avatar.url }}" alt="Avatar" class="w-8 h-8 rounded-full">
-                        {% else %}
-                            <i class="fas fa-user-circle text-gray-700 text-2xl"></i>
-                        {% endif %}
-                        <span class="hidden sm:block text-gray-700 font-medium">{{ request.user.username }}</span>
-                    </a>
+                        <div id="user-dropdown-menu" class="hidden absolute right-0 top-12 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-50 animate-fade-in">
+                            <a href="{% url 'profile' %}" class="block px-4 py-3 text-gray-700 hover:bg-blue-50 transition rounded-t-lg"><i class="fas fa-user mr-2"></i>Profile</a>
+                            <a href="{% url 'settings' %}" class="block px-4 py-3 text-gray-700 hover:bg-blue-50 transition"><i class="fas fa-cog mr-2"></i>Settings</a>
+                            <div class="border-t border-gray-100"></div>
+                            <a href="{% url 'logout' %}" class="block px-4 py-3 text-red-600 hover:bg-red-50 transition rounded-b-lg font-semibold"><i class="fas fa-sign-out-alt mr-2"></i>Logout</a>
+                        </div>
+                    </div>
                 </div>
             </header>
             <!-- Main Content Area -->
-            <main class="flex-1 bg-gray-50 p-8">
+            <main class="flex-1 bg-gray-50">
                 {% block body %}{% endblock %}
             </main>
         </div>
     </div>
+<script>
+// User menu dropdown: click to toggle, stays open when moving mouse
+document.addEventListener('DOMContentLoaded', function() {
+    const btn = document.getElementById('user-menu-button');
+    const menu = document.getElementById('user-dropdown-menu');
+    const container = document.getElementById('user-menu-container');
+    let menuOpen = false;
+    if (btn && menu) {
+        btn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            menu.classList.toggle('hidden');
+            menuOpen = !menuOpen;
+        });
+        // Close menu when clicking outside
+        document.addEventListener('click', function(e) {
+            if (menuOpen && !container.contains(e.target)) {
+                menu.classList.add('hidden');
+                menuOpen = false;
+            }
+        });
+    }
+});
+</script>
 </body>
 </html>
         <footer class="bg-gray-900 text-gray-300 mt-16 border-t border-gray-700">
