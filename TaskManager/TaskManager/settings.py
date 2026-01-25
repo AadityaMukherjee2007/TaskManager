@@ -36,9 +36,10 @@ TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
 # --------------------------------
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["azau7zta3g4a.connect.remote.it", "192.168.1.38", "127.0.0.1", "localhost"]
+CSRF_TRUSTED_ORIGINS = ["https://azau7zta3g4a.connect.remote.it"]
 
 
 # Application definition
@@ -131,7 +132,9 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
-STATIC_URL = "static/"
+STATIC_URL = "/static/"
+STATIC_ROOT = BASE_DIR / "static"
+
 # Email Configuration
 # All values loaded from .env for flexibility
 EMAIL_BACKEND = os.getenv('EMAIL_BACKEND', 'django.core.mail.backends.console.EmailBackend')
@@ -150,5 +153,3 @@ MEDIA_ROOT = BASE_DIR / 'media'
 # Usage: from django.conf import settings; settings.
 TELEGRAM_BOT_TOKEN=os.getenv("TELEGRAM_BOT_TOKEN", "")
 
-# Security settings
-CSRF_TRUSTED_ORIGINS = ['http://localhost:8000', 'http://127.0.0.1:8000']

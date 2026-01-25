@@ -1,0 +1,44 @@
+/* Custom CSS for Task Creation Form - overrides system styles */
+.task-form-override input,
+.task-form-override select,
+.task-form-override textarea {
+  background: #f8f9fa !important;
+  border: 2px solid #bdbdbd !important;
+  border-radius: 0.75rem !important;
+  color: #222 !important;
+  font-size: 1.1rem !important;
+  padding: 0.75rem 1rem !important;
+  box-shadow: 0 2px 8px 0 rgba(60,60,60,0.04);
+  transition: border 0.2s, box-shadow 0.2s;
+}
+.task-form-override input:focus,
+.task-form-override select:focus,
+.task-form-override textarea:focus {
+  border: 2px solid #6366f1 !important;
+  outline: none !important;
+  box-shadow: 0 0 0 2px #6366f133;
+}
+.task-form-override label {
+  color: #2d3748 !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.01em;
+}
+.task-form-override .errorlist,
+.task-form-override .text-red-600 {
+  color: #e53e3e !important;
+  font-weight: 600;
+}
+.task-form-override button[type="submit"] {
+  background: linear-gradient(90deg, #6366f1 0%, #3b82f6 100%) !important;
+  color: #fff !important;
+  border: none !important;
+  border-radius: 0.75rem !important;
+  font-weight: 700;
+  font-size: 1.1rem;
+  box-shadow: 0 4px 16px 0 rgba(99,102,241,0.10);
+  transition: background 0.2s, transform 0.2s;
+}
+.task-form-override button[type="submit"]:hover {
+  background: linear-gradient(90deg, #4f46e5 0%, #2563eb 100%) !important;
+  transform: scale(1.03);
+}
