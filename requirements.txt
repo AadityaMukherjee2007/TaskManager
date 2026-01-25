@@ -5,3 +5,4 @@ python-telegram-bot
 setuptools
 wheel
 gunicorn
+django-widget-tweaks

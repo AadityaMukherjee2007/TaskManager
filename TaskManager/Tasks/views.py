@@ -1,22 +1,25 @@
-from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_POST
+import json
+import secrets
+from datetime import timedelta
+
+from django.conf import settings
+from django.contrib import messages
+from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User
+from django.core.mail import send_mail
 from django.core.paginator import Paginator
+from django.db.models import Q, Count
 from django.http import JsonResponse, HttpResponseRedirect
 from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth.models import User
-from django.contrib.auth import authenticate, login, logout
 from django.urls import reverse
-from django.contrib.auth.decorators import login_required
-from django.db.models import Q, Count
 from django.utils import timezone
-from datetime import timedelta
-from django.core.mail import send_mail
-import secrets
-from django.contrib import messages
-from .models import Team, Project, Task, TaskComment, TaskActivity, TeamInvitation, SubTask, UserProfile, Notification
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST, require_GET
+
 from .forms import TaskForm, TaskCommentForm, SubTaskForm, TeamInvitationForm, ProjectForm, UserProfileForm
-from django.urls import reverse
-import json
+from .models import Team, Project, Task, TaskComment, TaskActivity, TeamInvitation, SubTask, UserProfile, Notification
+from .telegram_utils import send_telegram_message
 
 @login_required(login_url='login')
 @csrf_exempt
@@ -117,11 +120,6 @@ from django.utils import timezone
 from datetime import timedelta
 from django.core.mail import send_mail
 import secrets
-from django.contrib import messages
-from .models import Team, Project, Task, TaskComment, TaskActivity, TeamInvitation, SubTask, UserProfile, Notification
-from .forms import TaskForm, TaskCommentForm, SubTaskForm, TeamInvitationForm, ProjectForm, UserProfileForm
-from django.urls import reverse
-from django.conf import settings
 from .models import TeamInvitation
 
 # Edit a comment
@@ -283,7 +281,7 @@ def dashboard(request):
 
 @login_required(login_url='login')
 def profile_view(request):
-    """User profile page with notification preferences"""
+    #User profile page with notification preferences
     user = request.user
     
     # Get or create user profile
@@ -309,7 +307,6 @@ def profile_view(request):
                 profile.avatar = None
             profile.user = user
             profile.save()
-            from django.contrib import messages
             messages.success(request, 'Profile updated successfully!')
             return redirect('profile')
     else:
@@ -331,7 +328,7 @@ def profile_view(request):
 
 @login_required(login_url='login')
 def toggle_dark_mode(request):
-    """Toggle dark mode for the user"""
+    # Toggle dark mode for the user
     if request.method == 'POST':
         import json
         data = json.loads(request.body)
@@ -347,7 +344,7 @@ def toggle_dark_mode(request):
 
 @login_required(login_url='login')
 def settings_view(request):
-    """User settings page"""
+    # User settings page
     user = request.user
     user_teams = user.teams.all()
     managed_teams = user.managed_teams.all()
@@ -358,9 +355,7 @@ def settings_view(request):
         if action == 'delete_account':
             # Delete the user and all related data
             user.delete()
-            from django.contrib.auth import logout
             logout(request)
-            from django.shortcuts import redirect
             return redirect('login')
 
         if action == 'update_profile':
@@ -518,7 +513,8 @@ The TaskManager Team
                 messages.success(request, f'Invitation sent to {invite_email}!')
             except Exception as e:
                 messages.error(request, f'Error sending email: {str(e)}')
-            return redirect('dashboard')
+            # Stay on settings page and show toast
+            # (context is set below, so just fall through)
     
     all_teams = (user_teams | managed_teams).distinct()
     user_projects = Project.objects.filter(team__in=all_teams)

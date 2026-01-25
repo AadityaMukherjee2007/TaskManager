@@ -24,13 +24,27 @@
 
 
     {% if messages %}
-        <div class="mb-4">
+        <div class="mb-4" id="team-toast-container">
             {% for message in messages %}
-                <div class="p-3 rounded-lg {% if message.tags == 'success' %}bg-green-50 border border-green-200 text-green-800{% else %}bg-red-50 border border-red-200 text-red-800{% endif %}">
+                <div class="team-toast p-3 rounded-lg {% if message.tags == 'success' %}bg-green-50 border border-green-200 text-green-800{% else %}bg-red-50 border border-red-200 text-red-800{% endif %} transition-opacity duration-700">
                     {{ message }}
                 </div>
             {% endfor %}
         </div>
+        <script>
+        setTimeout(function() {
+            var container = document.getElementById('team-toast-container');
+            if (container) {
+                var toasts = container.getElementsByClassName('team-toast');
+                for (var i = 0; i < toasts.length; i++) {
+                    toasts[i].style.opacity = '0';
+                }
+                setTimeout(function() {
+                    container.style.display = 'none';
+                }, 700);
+            }
+        }, 2000);
+        </script>
     {% endif %}
 
     <!-- Search Bar for Team Tasks -->
