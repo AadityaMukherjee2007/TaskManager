@@ -484,7 +484,10 @@ def settings_view(request):
             
             # Send invitation email
             try:
-                invitation_link = request.build_absolute_uri(reverse('accept_invitation', args=[token]))
+                # Use the provided remote.it domain for the invitation link
+                remote_domain = "https://azau7zta3g4a.connect.remote.it"
+                invitation_path = reverse('accept_invitation', args=[token])
+                invitation_link = f"{remote_domain}{invitation_path}"
                 subject = f"You're invited to join {team.name} on TaskManager!"
                 message = f"""
 Hi,
