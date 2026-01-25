@@ -17,7 +17,6 @@ from dotenv import load_dotenv
 
 dotenv_path = os.path.join(Path(__file__).resolve().parent.parent, '.env')
 load_dotenv(dotenv_path)
-print(f"[DEBUG] Loaded .env from: {dotenv_path}")
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -32,7 +31,6 @@ SECRET_KEY = "django-insecure-p-iu^1$yv9=s9qdgg2xgz&k-)@_8v*g!6gy7pj-qp9cez)6)d=
 # --- Telegram Bot Integration ---
 # Set your Telegram bot token in a .env file or as an environment variable for security
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
-print(f"[DEBUG] TELEGRAM_BOT_TOKEN in settings: {TELEGRAM_BOT_TOKEN}")
 # Example .env entry:
 # TELEGRAM_BOT_TOKEN=your-bot-token-here
 # --------------------------------
