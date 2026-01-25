@@ -1177,6 +1177,19 @@ def toggle_subtask(request, subtask_id):
     if request.method == 'POST':
         subtask.is_completed = not subtask.is_completed
         subtask.save()
+        # Check if all subtasks are completed
+        if task.subtasks.exists() and not task.subtasks.filter(is_completed=False).exists():
+            if task.status != 'completed':
+                task.status = 'completed'
+                task.completed_at = timezone.now()
+                task.save()
+                from .models import TaskActivity
+                TaskActivity.objects.create(
+                    task=task,
+                    activity_type='completed',
+                    user=request.user,
+                    description='Task automatically marked as completed because all subtasks are done.'
+                )
         return redirect('task_detail', task_id=task.id)
     
     return redirect('task_detail', task_id=task.id)

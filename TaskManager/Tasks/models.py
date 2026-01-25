@@ -41,6 +41,9 @@ class Project(models.Model):
 
 class Task(models.Model):
     """Task model with team collaboration features"""
+
+    def all_subtasks_completed(self):
+        return self.subtasks.exists() and not self.subtasks.filter(is_completed=False).exists()
     
     PRIORITY_CHOICES = [
         ('low', 'Low'),
