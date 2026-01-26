@@ -38,15 +38,8 @@ TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = [".remote.it", "192.168.1.38", "127.0.0.1", "localhost"]
-CSRF_TRUSTED_ORIGINS = ["https://azau7zta3g4a.connect.remote.it"]
+ALLOWED_HOSTS = [".remote.it", "192.168.1.38", "127.0.0.1", "localhost", "*"]
 
-SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
-USE_X_FORWARDED_HOST = True
-
-# Cookies must be HTTPS-only when behind reverse proxy
-SESSION_COOKIE_SECURE = True
-CSRF_COOKIE_SECURE = True
 
 # Application definition
 
