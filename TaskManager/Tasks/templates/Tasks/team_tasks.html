@@ -3,9 +3,9 @@
 {% block title %}Team Projects - TaskManager{% endblock %}
 
 {% block body %}
-<div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-    <div class="mb-8 flex items-center justify-between gap-4 flex-wrap">
-        <div>
+<div class="max-w-6xl mx-auto px-2 sm:px-4 md:px-6 lg:px-8 py-4 md:py-8">
+    <div class="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4 flex-wrap">
+        <div class="mb-2 md:mb-0">
             <a href="{% url 'dashboard' %}" class="text-blue-600 hover:text-blue-800 font-semibold transition mb-2 inline-block">
                 <i class="fas fa-arrow-left mr-1"></i>Back to Dashboard
             </a>
@@ -13,10 +13,10 @@
             <p class="text-gray-600 text-lg">All projects for this team are listed below.</p>
         </div>
         <div class="flex gap-2 flex-wrap">
-            <a href="{% url 'create_project' team.id %}" class="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold rounded-lg transition">
+            <a href="{% url 'create_project' team.id %}" class="px-4 py-2 md:px-6 md:py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold rounded-lg transition text-sm md:text-base">
                 <i class="fas fa-plus mr-2"></i>New Project
             </a>
-            <button onclick="document.getElementById('inviteModal').classList.remove('hidden')" class="px-6 py-3 bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white font-semibold rounded-lg transition">
+            <button onclick="document.getElementById('inviteModal').classList.remove('hidden')" class="px-4 py-2 md:px-6 md:py-3 bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white font-semibold rounded-lg transition text-sm md:text-base">
                 <i class="fas fa-user-plus mr-2"></i>Invite by Email
             </button>
         </div>
@@ -48,9 +48,9 @@
     {% endif %}
 
     <!-- Search Bar for Team Tasks -->
-    <div class="flex justify-end mb-6">
-        <form method="get" class="relative" id="team-task-search-form">
-            <input type="text" name="search" value="{{ search_query|default:'' }}" placeholder="Search tasks by title, description, or project..." class="w-64 px-4 py-2 rounded-full border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm bg-gray-50 shadow transition" />
+    <div class="flex justify-end mb-4 md:mb-6">
+        <form method="get" class="relative w-full max-w-xs md:max-w-md" id="team-task-search-form">
+            <input type="text" name="search" value="{{ search_query|default:'' }}" placeholder="Search tasks by title, description, or project..." class="w-full px-4 py-2 rounded-full border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm bg-gray-50 shadow transition" />
             <button type="submit" class="absolute right-3 top-2 text-gray-400 hover:text-blue-600 focus:outline-none">
                 <i class="fas fa-search"></i>
             </button>
