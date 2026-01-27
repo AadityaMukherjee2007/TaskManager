@@ -274,7 +274,7 @@ To accept this invitation, click the link below or copy it into your browser:
 
 This invitation will expire in 7 days.
 
-If you don't have a TaskManager account yet, you'll need to create one before accepting the invitation.
+If you don't have a TaskManager account yet, you'll need to create one before accepting the invitation. Register here: https://azau7zta3g4a.connect.remote.it/register
 
 Best regards,
 TaskManager Team
