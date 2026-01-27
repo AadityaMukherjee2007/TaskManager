@@ -17,7 +17,7 @@ class TaskForm(forms.ModelForm):
     
     class Meta:
         model = Task
-        fields = ['title', 'description', 'priority', 'assignee', 'due_date', 'start_date']
+        fields = ['title', 'description', 'priority', 'assignee', 'due_date', 'start_date', 'status']
         widgets = {
             'title': forms.TextInput(attrs={
                 'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent',
@@ -40,6 +40,10 @@ class TaskForm(forms.ModelForm):
             'start_date': forms.DateInput(attrs={
                 'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent',
                 'type': 'date'
+            }),
+            'status': forms.Select(attrs={
+                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent',
+                'id': 'status'
             }),
         }
 
@@ -134,6 +138,11 @@ class ProjectForm(forms.ModelForm):
         }
 
 class UserProfileForm(forms.ModelForm):
+    remove_avatar = forms.BooleanField(
+        required=False,
+        label='Remove avatar',
+        widget=forms.CheckboxInput(attrs={'class': 'ml-2'})
+    )
     """Form for editing user profile"""
     first_name = forms.CharField(
         max_length=150,
@@ -160,27 +169,27 @@ class UserProfileForm(forms.ModelForm):
     
     class Meta:
         model = UserProfile
-        fields = ['bio', 'phone', 'avatar', 'dark_mode', 'theme_color', 
+        fields = ['bio', 'phone', 'avatar', 'remove_avatar', 'dark_mode', 'theme_color', 
                   'enable_email_notifications', 'enable_telegram_notifications', 'telegram_chat_id',
                   'notify_on_task_assignment', 'notify_on_task_completion', 
                   'notify_on_comment', 'notify_on_team_invitation', 'notify_on_subtask_assignment']
         widgets = {
             'bio': forms.Textarea(attrs={
-                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white',
+                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent',
                 'placeholder': 'Tell us about yourself...',
                 'rows': 4
             }),
             'phone': forms.TextInput(attrs={
-                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white',
+                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent',
                 'placeholder': 'Phone Number',
                 'type': 'tel'
             }),
             'avatar': forms.FileInput(attrs={
-                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white',
+                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent',
                 'accept': 'image/*'
             }),
             'telegram_chat_id': forms.TextInput(attrs={
-                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white',
+                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent',
                 'placeholder': 'Your Telegram Chat ID (optional)',
                 'type': 'text'
             }),
@@ -188,7 +197,7 @@ class UserProfileForm(forms.ModelForm):
                 'class': 'h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-2 focus:ring-blue-500'
             }),
             'theme_color': forms.Select(attrs={
-                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white'
+                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent'
             }),
             'enable_email_notifications': forms.CheckboxInput(attrs={
                 'class': 'h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-2 focus:ring-blue-500'

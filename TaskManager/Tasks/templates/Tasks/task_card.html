@@ -1,0 +1,55 @@
+
+<div class="relative bg-white border border-gray-200 rounded-xl p-3 shadow-sm hover:shadow-lg transition cursor-move group flex flex-col gap-2" draggable="true" ondragstart="onDragStart(event, '{{ task.id }}')" data-task-id="{{ task.id }}">
+    <div class="flex items-center gap-2 mb-1">
+        <input type="checkbox" class="mt-0.5 w-4 h-4 rounded border-gray-300 text-orange-500 focus:ring-orange-500">
+        <div class="flex-1 min-w-0">
+            <a href="{% url 'task_detail' task.id %}" class="text-base font-semibold text-gray-900 hover:text-orange-600 block truncate">{{ task.title }}</a>
+        </div>
+        <button onclick="openEditTaskModal('{{ task.id }}', '{{ task.title|escapejs }}', '{{ task.description|escapejs }}', '{{ task.priority }}', '{{ task.due_date }}')" class="ml-2 p-1 rounded-full bg-gray-100 hover:bg-orange-100 text-gray-400 hover:text-orange-600 transition" title="Edit Task">
+            <i class="fas fa-pen text-sm"></i>
+        </button>
+    </div>
+
+    {% if task.description %}
+        <p class="text-xs text-gray-600 mb-1 line-clamp-2">{{ task.description }}</p>
+    {% endif %}
+
+    <div class="flex flex-wrap items-center gap-2 text-xs text-gray-500 min-h-[2.5rem]">
+        {% if task.assignee %}
+            <div class="w-5 h-5 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 font-bold text-xs" title="Assigned to {{ task.assignee.username }}">
+                {{ task.assignee.username|slice:":1"|upper }}
+            </div>
+        {% else %}
+            <span class="italic text-gray-400">Unassigned</span>
+        {% endif %}
+        <span class="px-2 py-0.5 rounded bg-gray-100 text-gray-700 whitespace-nowrap flex items-center" title="Due date"><i class="far fa-calendar-alt mr-1"></i>{{ task.due_date|date:'M d' }}</span>
+        <span class="px-2 py-0.5 rounded bg-gray-100 text-gray-700 whitespace-nowrap" title="Priority">{{ task.priority|capfirst }}</span>
+        {% if task.priority == 'urgent' or task.priority == 'high' %}
+            <span class="px-2 py-0.5 bg-red-100 text-red-700 rounded text-xs font-bold whitespace-nowrap" title="High Priority">!</span>
+        {% endif %}
+        {% if task.status %}
+            {# Asana-style status badge #}
+            <span class="px-2 py-0.5 rounded font-semibold text-xs whitespace-nowrap
+                {% if task.status == 'completed' %}bg-green-100 text-green-700
+                {% elif task.status == 'in_progress' %}bg-yellow-100 text-yellow-800
+                {% elif task.status == 'in_review' %}bg-purple-100 text-purple-700
+                {% elif task.status == 'cancelled' %}bg-gray-200 text-gray-500
+                {% else %}bg-blue-100 text-blue-700{% endif %}"
+                title="Status">
+                {% if task.status == 'todo' %}To Do
+                {% elif task.status == 'in_progress' %}In Progress
+                {% elif task.status == 'in_review' %}In Review
+                {% elif task.status == 'completed' %}Completed
+                {% elif task.status == 'cancelled' %}Cancelled
+                {% else %}{{ task.status|capfirst }}{% endif %}
+            </span>
+        {% endif %}
+    </div>
+
+    {% if task.project %}
+        <div class="flex items-center gap-2 text-xs text-gray-400 mt-1">
+            <i class="fas fa-folder-open"></i>
+            <span>{{ task.project.name }}</span>
+        </div>
+    {% endif %}
+</div>

@@ -6,8 +6,8 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <!-- Header -->
         <div class="mb-8">
-            <h1 class="text-4xl font-bold text-gray-900 dark:text-white">My Profile</h1>
-            <p class="text-gray-600 dark:text-gray-400 mt-2">Manage your personal information and preferences</p>
+            <h1 class="text-4xl font-bold text-gray-900">My Profile</h1>
+            <p class="text-gray-600 mt-2">Manage your personal information and preferences</p>
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -27,33 +27,33 @@
                         </div>
 
                         <!-- User Info -->
-                        <h2 class="text-2xl font-bold text-gray-900 dark:text-white">
+                        <h2 class="text-2xl font-bold text-gray-900">
                             {% if user.first_name or user.last_name %}
                                 {{ user.first_name }} {{ user.last_name }}
                             {% else %}
                                 {{ user.username }}
                             {% endif %}
                         </h2>
-                        <p class="text-gray-600 dark:text-gray-400 mt-2">@{{ user.username }}</p>
-                        <p class="text-gray-500 dark:text-gray-500 text-sm mt-1">{{ user.email }}</p>
+                        <p class="text-gray-600 mt-2">@{{ user.username }}</p>
+                        <p class="text-gray-500 text-sm mt-1">{{ user.email }}</p>
 
                         {% if user.profile.bio %}
-                            <p class="text-gray-700 dark:text-gray-300 mt-4 text-sm">{{ user.profile.bio }}</p>
+                            <p class="text-gray-700 mt-4 text-sm">{{ user.profile.bio }}</p>
                         {% endif %}
 
                         <!-- Stats -->
-                        <div class="grid grid-cols-3 gap-4 mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
+                        <div class="grid grid-cols-3 gap-4 mt-8 pt-6 border-t border-gray-200">
                             <div>
                                 <p class="text-2xl font-bold text-blue-600">{{ user.created_tasks.count }}</p>
-                                <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">Tasks Created</p>
+                                <p class="text-xs text-gray-600 mt-1">Tasks Created</p>
                             </div>
                             <div>
                                 <p class="text-2xl font-bold text-green-600">{{ user.assigned_tasks.count }}</p>
-                                <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">Assigned Tasks</p>
+                                <p class="text-xs text-gray-600 mt-1">Assigned Tasks</p>
                             </div>
                             <div>
                                 <p class="text-2xl font-bold text-purple-600">{{ user.teams.count }}</p>
-                                <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">Teams</p>
+                                <p class="text-xs text-gray-600 mt-1">Teams</p>
                             </div>
                         </div>
                     </div>
@@ -70,7 +70,7 @@
             <!-- Edit Profile Form -->
             <div class="lg:col-span-2">
                 <div class="card p-6">
-                    <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-6">
+                    <h3 class="text-xl font-bold text-gray-900 mb-6">
                         <i class="fas fa-edit mr-2"></i>Edit Profile
                     </h3>
 
@@ -79,19 +79,19 @@
 
                         <!-- Personal Information Section -->
                         <div>
-                            <h4 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 pb-2 border-b border-gray-200 dark:border-gray-700">
+                            <h4 class="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b border-gray-200">
                                 <i class="fas fa-user-circle mr-2"></i>Personal Information
                             </h4>
 
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">
                                         First Name
                                     </label>
                                     {{ form.first_name }}
                                 </div>
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">
                                         Last Name
                                     </label>
                                     {{ form.last_name }}
@@ -99,28 +99,28 @@
                             </div>
 
                             <div class="mt-4">
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
                                     Email Address
                                 </label>
                                 {{ form.email }}
                             </div>
 
                             <div class="mt-4">
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
                                     Phone Number
                                 </label>
                                 {{ form.phone }}
                             </div>
 
                             <div class="mt-4">
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
                                     Bio
                                 </label>
                                 {{ form.bio }}
                             </div>
 
                             <div class="mt-4">
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
                                     Profile Picture
                                 </label>
                                 <div class="flex items-center gap-4">
@@ -129,6 +129,10 @@
                                     </div>
                                     {% if user.profile.avatar %}
                                         <img src="{{ user.profile.avatar.url }}" alt="Current Avatar" class="w-16 h-16 rounded-lg object-cover">
+                                        <div class="ml-4 flex items-center">
+                                            {{ form.remove_avatar }}
+                                            <label for="id_remove_avatar" class="ml-2 text-sm text-gray-700">Remove avatar</label>
+                                        </div>
                                     {% endif %}
                                 </div>
                             </div>
@@ -136,17 +140,17 @@
 
                         <!-- Display Preferences Section -->
                         <div>
-                            <h4 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 pb-2 border-b border-gray-200 dark:border-gray-700">
+                            <h4 class="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b border-gray-200">
                                 <i class="fas fa-palette mr-2"></i>Display Preferences
                             </h4>
 
                             <div class="space-y-4">
-                                <div class="flex items-center p-4 rounded-lg bg-gray-50 dark:bg-gray-700">
+                                <div class="flex items-center p-4 rounded-lg bg-gray-50">
                                     <div class="flex-1">
-                                        <label for="dark_mode" class="text-sm font-medium text-gray-700 dark:text-gray-300 cursor-pointer">
+                                        <label for="dark_mode" class="text-sm font-medium text-gray-700 cursor-pointer">
                                             <i class="fas fa-moon mr-2"></i>Dark Mode
                                         </label>
-                                        <p class="text-xs text-gray-600 dark:text-gray-400">Enable dark theme for the application</p>
+                                        <p class="text-xs text-gray-600">Enable dark theme for the application</p>
                                     </div>
                                     <div class="ml-4">
                                         {{ form.dark_mode }}
@@ -154,7 +158,7 @@
                                 </div>
 
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">
                                         <i class="fas fa-brush mr-2"></i>Theme Color
                                     </label>
                                     {{ form.theme_color }}
@@ -241,6 +245,8 @@
                                         <i class="fas fa-info-circle mr-1"></i>
                                         Don't have a Telegram Chat ID? 
                                         <a href="https://t.me/userinfobot" target="_blank" class="text-blue-600 dark:text-blue-400 hover:underline">Get it here</a>
+                                        <br/>
+                                        Want to link your chat? <a href="https://t.me/automyx_automation_bot" target="_blank" class="text-blue-600 dark:text-blue-400 hover:underline">Start the TaskManager Bot</a> and send /start to save your chat ID.
                                     </p>
                                 </div>
 
@@ -255,10 +261,10 @@
 
                         <!-- Form Actions -->
                         <div class="flex gap-4 pt-6 border-t border-gray-200 dark:border-gray-700">
-                            <button type="submit" class="flex-1 btn-primary text-center">
+                            <button type="submit" class="flex-1 px-8 py-2 bg-gradient-to-r from-green-400 to-blue-500 hover:from-green-500 hover:to-blue-600 text-white font-bold rounded-lg shadow-lg transition duration-200 transform hover:scale-105 flex items-center justify-center text-lg tracking-wide">
                                 <i class="fas fa-save mr-2"></i>Save Changes
                             </button>
-                            <a href="{% url 'dashboard' %}" class="flex-1 btn-secondary text-center">
+                            <a href="{% url 'dashboard' %}" class="flex-1 px-8 py-2 bg-gradient-to-r from-gray-200 to-gray-400 hover:from-gray-300 hover:to-gray-500 text-gray-800 font-semibold rounded-lg transition duration-200 transform hover:scale-105 flex items-center justify-center text-lg tracking-wide">
                                 <i class="fas fa-times mr-2"></i>Cancel
                             </a>
                         </div>
@@ -360,19 +366,4 @@
                         </div>
                     </div>
 
-                    <div class="p-4 rounded-lg bg-red-50 dark:bg-red-900 border border-red-200 dark:border-red-700">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <p class="text-sm font-medium text-red-900 dark:text-red-200">Delete Account</p>
-                                <p class="text-xs text-red-700 dark:text-red-300">Permanently delete your account and data</p>
-                            </div>
-                            <button class="px-3 py-1 bg-red-600 hover:bg-red-700 text-white text-sm rounded-lg transition">
-                                <i class="fas fa-trash mr-1"></i>Delete
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-{% endblock %}
+        {% endblock %}

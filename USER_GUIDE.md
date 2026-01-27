@@ -2,6 +2,36 @@
 
 ## 🚀 Quick Start
 
+## 📲 Telegram Bot Integration
+
+### Setup
+1. Add your Telegram bot token to the `.env` file:
+   ```env
+   TELEGRAM_BOT_TOKEN="your-bot-token-here"
+   ```
+2. The Django app will load this token automatically.
+
+### Sending a Telegram Message (Demo)
+You can test the integration by visiting:
+
+```
+http://localhost:8000/telegram-test-message/?chat_id=YOUR_CHAT_ID
+```
+
+Replace `YOUR_CHAT_ID` with your Telegram user or group chat ID.
+
+If successful, you will receive a message from your bot: `Hello from TaskManager Django!`
+
+### Usage in Code
+To send a message from your Django logic:
+
+```python
+from Tasks.telegram_utils import send_telegram_message
+send_telegram_message(chat_id, "Your message here")
+```
+
+The function is safe to use in views, signals, or any backend logic.
+
 ### Step 1: Setup
 ```bash
 cd /workspaces/TaskManager/TaskManager

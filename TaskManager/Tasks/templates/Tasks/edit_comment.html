@@ -1,0 +1,31 @@
+{% extends "Tasks/base.html" %}
+
+{% block title %}Edit Comment - TaskManager{% endblock %}
+
+{% block body %}
+<div class="max-w-xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="mb-8">
+        <a href="{% url 'task_detail' task.id %}" class="text-blue-600 hover:text-blue-700 mb-2 inline-block">
+            <i class="fas fa-arrow-left mr-1"></i>Back to Task
+        </a>
+    </div>
+    <div class="bg-white rounded-lg shadow p-8">
+        <h1 class="text-2xl font-bold text-gray-900 mb-6">Edit Comment</h1>
+        <form method="post" class="space-y-6">
+            {% csrf_token %}
+            {{ form.content }}
+            {% if form.content.errors %}
+                <p class="text-red-600 text-sm mt-1">{{ form.content.errors.0 }}</p>
+            {% endif %}
+            <div class="flex gap-4">
+                <button type="submit" class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition">
+                    <i class="fas fa-save mr-1"></i>Save Changes
+                </button>
+                <a href="{% url 'task_detail' task.id %}" class="px-6 py-2 border border-gray-300 text-gray-700 hover:bg-gray-50 font-semibold rounded-lg transition text-center">
+                    Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

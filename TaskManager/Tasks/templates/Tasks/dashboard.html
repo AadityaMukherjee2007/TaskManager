@@ -3,231 +3,232 @@
 {% block title %}Dashboard - TaskManager{% endblock %}
 
 {% block body %}
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="max-w-7xl mx-auto px-2 sm:px-4 md:px-6 lg:px-8 py-6 md:py-10 relative bg-gradient-to-br from-gray-50 to-white min-h-screen">
         <!-- Welcome Section -->
-        <div class="mb-8">
-            <h1 class="text-4xl font-bold text-gray-900 dark:text-white">Welcome, <span class="text-blue-600 dark:text-blue-400">{{ user.username }}</span>!</h1>
-            <p class="text-gray-600 dark:text-gray-400 mt-2">Here's an overview of your tasks and team activities.</p>
-        </div>
-
-        <!-- Quick Stats -->
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-            <!-- Pending Tasks -->
-            <div class="card border-l-4 border-yellow-500 p-6">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-gray-500 dark:text-gray-400 text-sm font-medium">To Do</p>
-                        <p class="text-3xl font-bold text-gray-900 dark:text-white">{{ pending }}</p>
-                    </div>
-                    <i class="fas fa-list text-yellow-500 text-3xl opacity-20"></i>
-                </div>
+        <div class="mb-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4 md:gap-6">
+            <div>
+                <h1 class="text-2xl sm:text-3xl md:text-4xl font-black text-gray-900 tracking-tight mb-2">Welcome, <span class="text-indigo-600">{{ user.username }}</span>!</h1>
+                <p class="text-gray-500 mt-1 text-base md:text-lg font-medium">Your personalized dashboard for productivity and collaboration.</p>
             </div>
-
-            <!-- In Progress -->
-            <div class="card border-l-4 border-blue-500 p-6">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-gray-500 dark:text-gray-400 text-sm font-medium">In Progress</p>
-                        <p class="text-3xl font-bold text-gray-900 dark:text-white">{{ in_progress }}</p>
-                    </div>
-                    <i class="fas fa-spinner text-blue-500 text-3xl opacity-20"></i>
-                </div>
-            </div>
-
-            <!-- Completed -->
-            <div class="card border-l-4 border-green-500 p-6">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-gray-500 dark:text-gray-400 text-sm font-medium">Completed</p>
-                        <p class="text-3xl font-bold text-gray-900 dark:text-white">{{ completed }}</p>
-                    </div>
-                    <i class="fas fa-check-circle text-green-500 text-3xl opacity-20"></i>
-                </div>
-            </div>
-
-            <!-- Urgent Tasks -->
-            <div class="card border-l-4 border-red-500 p-6">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-gray-500 dark:text-gray-400 text-sm font-medium">Urgent</p>
-                        <p class="text-3xl font-bold text-gray-900 dark:text-white">{{ urgent_tasks.count }}</p>
-                    </div>
-                    <i class="fas fa-exclamation-circle text-red-500 text-3xl opacity-20"></i>
-                </div>
-            </div>
-        </div>
-
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <!-- Left Column: Tasks -->
-            <div class="lg:col-span-2">
-                <!-- Urgent Tasks Alert -->
-                {% if urgent_tasks %}
-                    <div class="bg-red-50 dark:bg-red-900 border border-red-200 dark:border-red-700 rounded-lg p-4 mb-6">
-                        <div class="flex items-start">
-                            <i class="fas fa-exclamation-triangle text-red-600 dark:text-red-400 text-xl mt-1 mr-3"></i>
-                            <div>
-                                <h3 class="text-red-900 dark:text-red-200 font-semibold">Urgent Tasks Pending</h3>
-                                <p class="text-red-700 dark:text-red-300 text-sm mt-1">You have {{ urgent_tasks.count }} urgent task(s) that need your attention.</p>
-                            </div>
+            <div class="flex gap-2 flex-wrap justify-end">
+                <!-- Modern Quick Actions Section -->
+                <div class="mb-0">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-8">
+                        <!-- Create Team Card -->
+                        <div class="bg-gradient-to-br from-indigo-600 to-blue-500 rounded-2xl shadow-xl p-4 flex flex-col items-center justify-center text-white hover:scale-105 transition-transform cursor-pointer border border-indigo-100 min-h-[220px]">
+                            <i class="fas fa-users text-2xl mb-2"></i>
+                            <h3 class="text-base font-bold mb-1">Create Team</h3>
+                            <p class="text-xs mb-2 text-indigo-100">Start collaborating by creating a new team.</p>
+                            <a href="{% url 'create_team' %}" class="bg-white text-indigo-600 font-semibold px-3 py-1.5 rounded-lg shadow hover:bg-indigo-50 transition mt-1">New Team</a>
                         </div>
-                    </div>
-                {% endif %}
-
-                <!-- My Tasks Section -->
-                <div class="card">
-                    <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-                        <h2 class="text-xl font-bold text-gray-900 dark:text-white">My Tasks</h2>
-                    </div>
-                    <div class="divide-y dark:divide-gray-700">
-                        {% if my_tasks %}
-                            {% for task in my_tasks|slice:":10" %}
-                                <div class="px-6 py-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition">
-                                    <div class="flex items-start justify-between">
-                                        <div class="flex-1">
-                                            <a href="#" class="font-semibold text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition">{{ task.title }}</a>
-                                            <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">{{ task.description|truncatewords:15 }}</p>
-                                            <div class="flex items-center gap-3 mt-2">
-                                                <span class="inline-block px-2 py-1 text-xs font-semibold rounded-full badge
-                                                    {% if task.status == 'todo' %}
-                                                        badge-warning
-                                                    {% elif task.status == 'in_progress' %}
-                                                        bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200
-                                                    {% elif task.status == 'in_review' %}
-                                                        bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200
-                                                    {% elif task.status == 'completed' %}
-                                                        badge-success
-                                                    {% else %}
-                                                        bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200
-                                                    {% endif %}
-                                                ">
-                                                    {{ task.get_status_display }}
-                                                </span>
-                                                <span class="inline-block px-2 py-1 text-xs font-semibold rounded-full badge
-                                                    {% if task.priority == 'urgent' %}
-                                                        badge-danger
-                                                    {% elif task.priority == 'high' %}
-                                                        bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-200
-                                                    {% elif task.priority == 'medium' %}
-                                                        badge-warning
-                                                    {% else %}
-                                                        badge-success
-                                                    {% endif %}
-                                                ">
-                                                    {{ task.get_priority_display }}
-                                                </span>
-                                                {% if task.due_date %}
-                                                    <span class="text-xs text-gray-600 dark:text-gray-400">
-                                                        <i class="fas fa-calendar mr-1"></i>{{ task.due_date|date:"M d, Y" }}
-                                                    </span>
-                                                {% endif %}
+                        <!-- Add Project Card -->
+                        <div class="bg-gradient-to-br from-green-500 to-blue-400 rounded-2xl shadow-xl p-4 flex flex-col items-center justify-center text-white hover:scale-105 transition-transform cursor-pointer border border-green-100 min-h-[220px]">
+                            <i class="fas fa-folder-plus text-2xl mb-2"></i>
+                            <h3 class="text-base font-bold mb-1">Add Project</h3>
+                            <p class="text-xs mb-2 text-green-100">Organize your work by adding a project to a team.</p>
+                            {% if teams and teams|length > 0 %}
+                                <div x-data="{ open: false, search: '', selected: null, teams: [
+                                    {% for team in teams %}{ id: {{ team.id }}, name: '{{ team.name|escapejs }}' },{% endfor %}
+                                ] }" class="relative w-full">
+                                    <button @click="open = !open" type="button" class="w-full px-3 py-1.5 rounded-lg text-gray-700 bg-white border border-gray-200 shadow hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-green-400 text-xs mb-1 flex items-center justify-between">
+                                        <span x-text="selected ? teams.find(t => t.id == selected).name : 'Select Team'"></span>
+                                        <i class="fas fa-chevron-down ml-2"></i>
+                                    </button>
+                                    <div x-show="open" @click.away="open = false" class="absolute z-10 mt-1 w-full bg-white border border-green-200 rounded-xl shadow-2xl max-h-40 overflow-y-auto">
+                                        <input x-model="search" type="text" placeholder="Search team..." class="w-full px-3 py-1 border-b border-gray-100 text-xs focus:outline-none" />
+                                        <template x-for="team in teams.filter(t => t.name.toLowerCase().includes(search.toLowerCase()))" :key="team.id">
+                                            <div @click="selected = team.id; open = false" class="px-4 py-2 flex items-center gap-2 cursor-pointer hover:bg-green-100 transition text-gray-800" :class="{ 'bg-green-100': selected === team.id }">
+                                                <i class="fas fa-users text-green-500"></i>
+                                                <span x-text="team.name"></span>
                                             </div>
-                                        </div>
-                                        <div class="ml-4">
-                                            <div class="w-10 h-10 rounded-full bg-gradient-to-r from-blue-500 to-indigo-500 flex items-center justify-center text-white font-bold text-sm" title="{{ task.author.username }}">
-                                                {{ task.author.username|first|upper }}
-                                            </div>
-                                        </div>
+                                        </template>
+                                        <div x-show="teams.filter(t => t.name.toLowerCase().includes(search.toLowerCase())).length === 0" class="px-4 py-2 text-gray-400 text-sm">No teams found.</div>
                                     </div>
+                                    <a :href="selected ? `/project/create/${selected}` : '#'" :class="selected ? 'bg-green-600 text-white hover:bg-green-700' : 'bg-gray-200 text-gray-400 cursor-not-allowed'" class="mt-1 font-semibold px-3 py-1.5 rounded-lg shadow transition block text-center text-xs">Add Project</a>
                                 </div>
-                            {% endfor %}
-                        {% else %}
-                            <div class="px-6 py-12 text-center">
-                                <i class="fas fa-tasks text-4xl text-gray-300 dark:text-gray-600 mb-4"></i>
-                                <p class="text-gray-500 dark:text-gray-400">No tasks assigned yet</p>
-                            </div>
-                        {% endif %}
-                    </div>
-                </div>
-            </div>
-
-            <!-- Right Column: Sidebar -->
-            <div class="space-y-6">
-                <!-- Teams -->
-                <div class="card">
-                    <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
-                        <h3 class="text-lg font-bold text-gray-900 dark:text-white">Teams & Projects</h3>
-                    </div>
-                    <div class="divide-y dark:divide-gray-700">
-                        {% if teams %}
-                            {% for team in teams %}
-                                <div class="px-6 py-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition">
-                                    <div class="flex items-center justify-between mb-3">
-                                        <div>
-                                            <p class="font-semibold text-gray-900 dark:text-white">{{ team.name }}</p>
-                                            <p class="text-xs text-gray-600 dark:text-gray-400">{{ team.members.count }} member(s)</p>
-                                        </div>
-                                        {% if team.admin == request.user %}
-                                            <a href="{% url 'create_project' team.id %}" class="text-xs bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-200 px-2 py-1 rounded hover:bg-blue-200 dark:hover:bg-blue-800 transition">
-                                                <i class="fas fa-plus mr-1"></i>Project
-                                            </a>
+                                <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+                            {% else %}
+                                <a href="{% url 'create_team' %}" class="bg-white text-green-600 font-semibold px-4 py-2 rounded-lg shadow hover:bg-green-50 transition block text-center">Create a Team First</a>
+                            {% endif %}
+                        </div>
+                        <!-- Add Task Card -->
+                        <div class="bg-gradient-to-br from-pink-500 to-purple-500 rounded-2xl shadow-xl p-4 flex flex-col items-center justify-center text-white hover:scale-105 transition-transform cursor-pointer border border-pink-100 min-h-[220px]">
+                            <i class="fas fa-plus text-2xl mb-2"></i>
+                            <h3 class="text-base font-bold mb-1">Add Task</h3>
+                            <p class="text-xs mb-2 text-pink-100">Quickly add a new task to your project.</p>
+                            {% if user_projects and user_projects|length > 0 %}
+                                <div x-data="{ open: false, search: '', selected: null, projects: [
+                                    {% for project in user_projects %}{ id: {{ project.id }}, name: '{{ project.name|escapejs }}' },{% endfor %}
+                                ] }" class="relative w-full">
+                                    <button @click="open = !open" type="button" class="w-full px-3 py-1.5 rounded-lg text-gray-700 bg-white border border-gray-200 shadow hover:bg-pink-50 focus:outline-none focus:ring-2 focus:ring-pink-400 text-xs mb-1 flex items-center justify-between">
+                                        <span x-text="selected ? projects.find(p => p.id == selected).name : 'Select Project'"></span>
+                                        <i class="fas fa-chevron-down ml-2"></i>
+                                    </button>
+                                    <div x-show="open" @click.away="open = false" class="absolute z-10 mt-1 w-full bg-white border border-pink-200 rounded-xl shadow-2xl max-h-40 overflow-y-auto">
+                                        <input x-model="search" type="text" placeholder="Search project..." class="w-full px-3 py-1 border-b border-gray-100 text-xs focus:outline-none" />
+                                        <template x-for="project in projects.filter(p => p.name.toLowerCase().includes(search.toLowerCase()))" :key="project.id">
+                                            <div @click="selected = project.id; open = false" class="px-4 py-2 flex items-center gap-2 cursor-pointer hover:bg-pink-100 transition text-gray-800" :class="{ 'bg-pink-100': selected === project.id }">
+                                                <i class="fas fa-folder text-pink-500"></i>
+                                                <span x-text="project.name"></span>
+                                            </div>
+                                        </template>
+                                        <div x-show="projects.filter(p => p.name.toLowerCase().includes(search.toLowerCase())).length === 0" class="px-4 py-2 text-gray-400 text-sm">No projects found.</div>
+                                    </div>
+                                    <a :href="selected ? `/project/${selected}/create-task` : '#'" :class="selected ? 'bg-pink-600 text-white hover:bg-pink-700' : 'bg-gray-200 text-gray-400 cursor-not-allowed'" class="mt-1 font-semibold px-3 py-1.5 rounded-lg shadow transition block text-center text-xs">Add Task</a>
+                                </div>
+                                <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+                            {% else %}
+                                <div class="w-full text-center">
+                                    <div class="bg-white text-pink-600 font-semibold px-4 py-4 rounded-lg shadow mb-2">
+                                        <i class="fas fa-folder-open text-2xl mb-2 block"></i>
+                                        <div class="text-lg font-bold mb-1">No Projects Available</div>
+                                        <div class="text-sm mb-3">You need to create a project before you can add tasks.</div>
+                                        {% if teams and teams.0 and teams.0.id %}
+                                            <a href="{% url 'create_project' teams.0.id %}" class="inline-block bg-pink-600 hover:bg-pink-700 text-white font-semibold px-4 py-2 rounded-lg shadow transition">Create Your First Project</a>
+                                        {% else %}
+                                            <span class="inline-block bg-gray-200 text-gray-400 font-semibold px-4 py-2 rounded-lg shadow transition cursor-not-allowed">Create Your First Project</span>
                                         {% endif %}
                                     </div>
-                                    {% if team.projects.all %}
-                                        <div class="ml-0 mt-2 space-y-1 text-xs">
-                                            {% for project in team.projects.all|slice:":3" %}
-                                                <a href="{% url 'project_tasks' project.id %}" class="block text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 truncate">
-                                                    <i class="fas fa-folder-open mr-1"></i>{{ project.name }}
-                                                </a>
-                                            {% endfor %}
-                                            {% if team.projects.all|length > 3 %}
-                                                <p class="text-gray-500 dark:text-gray-500">+{{ team.projects.all|length|add:"-3" }} more</p>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Dashboard Content -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-10">
+            <!-- Left Column: Task Summary -->
+            <div class="lg:col-span-1 space-y-8">
+                <div class="bg-gradient-to-br from-white to-indigo-50 rounded-2xl shadow-xl p-7 mb-4 border-t-4 border-indigo-500 hover:shadow-2xl transition-all duration-200">
+                    <h3 class="text-lg font-extrabold text-gray-900 mb-6 flex items-center gap-2"><i class="fas fa-chart-pie text-indigo-500"></i> Task Summary</h3>
+                    <div class="grid grid-cols-2 md:grid-cols-2 gap-8">
+                        <div class="flex flex-col items-center">
+                            <span class="text-blue-600 text-4xl font-black">{{ pending }}</span>
+                            <span class="text-xs text-gray-500 mt-2 tracking-wide uppercase">To Do</span>
+                        </div>
+                        <div class="flex flex-col items-center">
+                            <span class="text-yellow-600 text-4xl font-black">{{ in_progress }}</span>
+                            <span class="text-xs text-gray-500 mt-2 tracking-wide uppercase">In Progress</span>
+                        </div>
+                        <div class="flex flex-col items-center">
+                            <span class="text-green-600 text-4xl font-black">{{ completed }}</span>
+                            <span class="text-xs text-gray-500 mt-2 tracking-wide uppercase">Completed</span>
+                        </div>
+                        <div class="flex flex-col items-center">
+                            <span class="text-red-600 text-4xl font-black">{{ urgent_tasks.count }}</span>
+                            <span class="text-xs text-gray-500 mt-2 tracking-wide uppercase">Urgent</span>
+                        </div>
+                    </div>
+                </div>
+                
+            </div>
+            <!-- Right Column: Recent Activities & Tasks -->
+            <div class="lg:col-span-2 space-y-10">
+                <div class="bg-gradient-to-br from-white to-green-50 rounded-2xl shadow-xl p-7 mb-4 border-t-4 border-green-500 hover:shadow-2xl transition-all duration-200">
+                    <h3 class="text-lg font-extrabold text-gray-900 mb-6 flex items-center gap-2">
+                        <i class="fas fa-tasks text-green-500"></i> Recent Tasks
+                        {% if search_query %}
+                            <span class="ml-2 px-2 py-1 bg-blue-100 text-blue-700 text-xs font-semibold rounded">Search: "{{ search_query }}"</span>
+                        {% endif %}
+                    </h3>
+                    <div class="space-y-4 overflow-y-auto" style="max-height: 350px; min-height: 100px;">
+                        {% if recent_tasks %}
+                            {% for task in recent_tasks %}
+                                <div class="group flex items-center gap-4 bg-gradient-to-br from-white to-gray-50 border border-gray-200 rounded-xl shadow-md hover:shadow-xl transition-all duration-200 p-4 relative">
+                                    <div class="flex flex-col items-center justify-center mr-2">
+                                        <div class="w-12 h-12 rounded-full bg-gradient-to-r from-blue-500 to-indigo-500 flex items-center justify-center text-white font-bold text-lg shadow" title="Author: {{ task.author.username }}">
+                                            {{ task.author.username|first|upper }}
+                                        </div>
+                                        <span class="text-xs text-gray-500 mt-1" title="Task Author">{{ task.author.username }}</span>
+                                    </div>
+                                    <div class="flex-1 min-w-0">
+                                        <div class="flex items-center gap-2 mb-1">
+                                            <a href="{% url 'task_detail' task.id %}" class="font-bold text-gray-900 hover:text-green-600 text-lg truncate" title="View Task">{{ task.title }}</a>
+                                            {% if task.priority == 'urgent' %}
+                                                <i class="fas fa-exclamation-circle text-red-500" title="Urgent"></i>
+                                            {% elif task.priority == 'high' %}
+                                                <i class="fas fa-arrow-up text-orange-400" title="High Priority"></i>
+                                            {% elif task.priority == 'medium' %}
+                                                <i class="fas fa-arrow-right text-yellow-400" title="Medium Priority"></i>
                                             {% endif %}
                                         </div>
+                                        <p class="text-gray-600 text-sm mb-2 truncate">{{ task.description|truncatewords:15 }}</p>
+                                        <div class="flex flex-wrap items-center gap-2 mt-1">
+                                            <span class="inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full
+                                                {% if task.status == 'todo' %}bg-yellow-100 text-yellow-800{% elif task.status == 'in_progress' %}bg-blue-100 text-blue-800{% elif task.status == 'in_review' %}bg-purple-100 text-purple-800{% elif task.status == 'completed' %}bg-green-100 text-green-800{% else %}bg-gray-100 text-gray-800{% endif %}"
+                                                title="Status: {{ task.get_status_display }}">
+                                                <i class="fas fa-info-circle mr-1"></i>{{ task.get_status_display }}
+                                            </span>
+                                            <span class="inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full
+                                                {% if task.priority == 'urgent' %}bg-red-100 text-red-700{% elif task.priority == 'high' %}bg-orange-100 text-orange-800{% elif task.priority == 'medium' %}bg-yellow-100 text-yellow-800{% else %}bg-green-100 text-green-800{% endif %}"
+                                                title="Priority: {{ task.get_priority_display }}">
+                                                <i class="fas fa-bolt mr-1"></i>{{ task.get_priority_display }}
+                                            </span>
+                                            {% if task.due_date %}
+                                                <span class="inline-flex items-center px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-700" title="Due: {{ task.due_date|date:'l, F d, Y' }}">
+                                                    <i class="fas fa-calendar mr-1"></i>{{ task.due_date|date:"M d, Y" }}
+                                                </span>
+                                            {% endif %}
+                                            {% if task.assignee %}
+                                                <span class="inline-flex items-center px-2 py-1 text-xs font-medium rounded-full bg-indigo-100 text-indigo-700" title="Assigned to: {{ task.assignee.username }}">
+                                                    <i class="fas fa-user mr-1"></i>{{ task.assignee.username }}
+                                                </span>
+                                            {% endif %}
+                                        </div>
+                                        {# Progress bar removed as requested #}
+                                    </div>
+                                    {% if task.priority == 'urgent' %}
+                                        <span class="absolute top-2 right-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded shadow" title="Urgent">URGENT</span>
                                     {% endif %}
                                 </div>
                             {% endfor %}
                         {% else %}
-                            <div class="px-6 py-4">
-                                <p class="text-gray-600 dark:text-gray-400 text-sm">No teams yet. Create or join a team to get started!</p>
+                            <div class="py-8 flex flex-col items-center justify-center text-gray-400">
+                                <img src="https://cdn.jsdelivr.net/gh/edent/SuperTinyIcons/images/svg/clipboard.svg" alt="No tasks" class="w-12 h-12 mb-2 opacity-60" loading="lazy">
+                                <div class="text-base font-medium">No recent tasks.</div>
+                                <div class="text-xs mt-1">Your latest tasks will appear here.</div>
                             </div>
                         {% endif %}
                     </div>
                 </div>
-
-                <!-- Upcoming Deadlines -->
-                <div class="card">
-                    <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-                        <h3 class="text-lg font-bold text-gray-900 dark:text-white">Upcoming Deadlines</h3>
-                    </div>
-                    <div class="divide-y dark:divide-gray-700">
-                        {% if upcoming_deadlines %}
-                            {% for task in upcoming_deadlines %}
-                                <div class="px-6 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition">
-                                    <p class="font-semibold text-gray-900 dark:text-white text-sm">{{ task.title|truncatewords:5 }}</p>
-                                    <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">
-                                        <i class="fas fa-calendar"></i> {{ task.due_date|date:"M d" }}
-                                    </p>
-                                </div>
-                            {% endfor %}
-                        {% else %}
-                            <div class="px-6 py-4">
-                                <p class="text-gray-600 dark:text-gray-400 text-sm">No upcoming deadlines</p>
-                            </div>
-                        {% endif %}
-                    </div>
-                </div>
-
-                <!-- Recent Activity -->
-                <div class="card">
-                    <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-                        <h3 class="text-lg font-bold text-gray-900 dark:text-white">Recent Activity</h3>
-                    </div>
-                    <div class="divide-y dark:divide-gray-700 max-h-96 overflow-y-auto">
+                <div class="bg-gradient-to-br from-white to-blue-50 rounded-2xl shadow-xl p-7 mb-4 border-t-4 border-blue-500 hover:shadow-2xl transition-all duration-200">
+                    <h3 class="text-lg font-extrabold text-gray-900 mb-6 flex items-center gap-2"><i class="fas fa-bolt text-blue-500"></i> Recent Activities</h3>
+                    <div class="divide-y overflow-y-auto" style="max-height: 350px; min-height: 100px;">
                         {% if recent_activities %}
                             {% for activity in recent_activities %}
-                                <div class="px-6 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition text-sm">
-                                    <p class="text-gray-900 dark:text-white"><span class="font-semibold">{{ activity.user.username }}</span> {{ activity.get_activity_type_display|lower }} task</p>
-                                    <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">{{ activity.created_at|timesince }} ago</p>
+                                <div class="py-4 flex items-center gap-3 hover:bg-blue-50 transition cursor-pointer rounded-lg">
+                                    <div class="w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 to-indigo-500 flex items-center justify-center text-white font-bold text-xs shadow">
+                                        {{ activity.user.username|first|upper }}
+                                    </div>
+                                    <div>
+                                        <span class="font-semibold text-gray-900">{{ activity.user.username }}</span>
+                                        <span class="text-gray-600 text-sm ml-2">{{ activity.description }}</span>
+                                        <span class="text-gray-400 text-xs ml-2">{{ activity.created_at|timesince }} ago</span>
+                                    </div>
                                 </div>
                             {% endfor %}
                         {% else %}
-                            <div class="px-6 py-4">
-                                <p class="text-gray-600 dark:text-gray-400 text-sm">No recent activity</p>
+                            <div class="py-8 flex flex-col items-center justify-center text-gray-400">
+                                <img src="https://cdn.jsdelivr.net/gh/edent/SuperTinyIcons/images/svg/activity.svg" alt="No activity" class="w-12 h-12 mb-2 opacity-60" loading="lazy">
+                                <div class="text-base font-medium">No recent activity.</div>
+                                <div class="text-xs mt-1">Your recent actions will appear here.</div>
                             </div>
                         {% endif %}
                     </div>
                 </div>
             </div>
         </div>
+        <!-- Floating Add Button -->
+        <a href="#" id="floatingAddTask" class="fixed bottom-8 right-8 bg-gradient-to-br from-indigo-500 to-blue-600 hover:from-indigo-600 hover:to-blue-700 text-white rounded-full shadow-2xl w-16 h-16 flex items-center justify-center text-3xl z-50 transition focus:outline-none focus:ring-4 focus:ring-indigo-300" title="Quick Add Task">
+            <i class="fas fa-plus"></i>
+        </a>
+        <script>
+            document.getElementById('floatingAddTask').onclick = function(e) {
+                e.preventDefault();
+                const btn = document.getElementById('dashboardAddTaskBtn');
+                if(btn) btn.click();
+            };
+        </script>
     </div>
 {% endblock %}
